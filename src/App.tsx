@@ -1,116 +1,169 @@
+import { useState } from 'react';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  useNavigate,
-  useLocation,
-} from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import {
-  BarChart3,
-  Building2,
-  Users,
+  LayoutDashboard,
+  Users, // Keep icon, but label changes
+  Building,
+  FileText,
   Settings,
-  Bell,
-  User,
+  ChevronLeft,
+  ChevronRight,
+  LogOut,
+  UserCog,
   ClipboardList,
-  FileSpreadsheet,
-  BarChart4,
-} from "lucide-react";
-import Dashboard from "@/pages/Dashboard";
-import Companies from "@/pages/Companies";
-import UserManagement from "@/pages/UserManagement";
-import SettingsPage from "@/pages/Settings";
-import Login from "@/pages/Login";
-import Contracts from "@/pages/Contracts";
-import Assessments from "@/pages/Assessments";
-import Surveys from "@/pages/Surveys";
+  ShieldCheck, // New icon for System Admins
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
 
-const sidebarItems = [
-  { icon: BarChart3, label: "ダッシュボード", path: "/" },
-  { icon: Building2, label: "企業管理", path: "/companies" },
-  { icon: ClipboardList, label: "契約管理", path: "/contracts" },
-  { icon: FileSpreadsheet, label: "アセスメント", path: "/assessments" },
-  { icon: BarChart4, label: "サーベイ", path: "/surveys" },
-  { icon: Users, label: "管理者管理", path: "/users" },
-  { icon: Settings, label: "設定", path: "/settings" },
+// Import Pages
+import Dashboard from './pages/Dashboard';
+import SystemAdminManagement from './pages/SystemAdminManagement'; // Renamed import
+import AddSystemAdmin from './pages/AddSystemAdmin'; // Import new page
+import Companies from './pages/Companies';
+import AddCompany from './pages/AddCompany';
+import UpdateCompany from './pages/UpdateCompany';
+import Contracts from './pages/Contracts';
+import Surveys from './pages/Surveys';
+import Assessments from './pages/Assessments';
+import AddAssessment from './pages/AddAssessment';
+import AssessmentDetail from './pages/AssessmentDetail';
+import SettingsPage from './pages/Settings';
+import Login from './pages/Login';
+import CompanyAdmins from './pages/CompanyAdmins';
+import AddCompanyAdmin from './pages/AddCompanyAdmin';
+
+const navItems = [
+  // { to: '/', label: 'ダッシュボード', icon: LayoutDashboard },
+  { to: '/system-admins', label: 'システム管理者管理', icon: ShieldCheck }, // Renamed label, updated path, new icon
+  { to: '/companies', label: '企業一覧', icon: Building },
+  { to: '/company-admins', label: '企業管理者', icon: UserCog },
+  { to: '/contracts', label: '契約管理', icon: FileText },
+  // { to: '/surveys', label: 'アンケート', icon: FileText },
+  { to: '/assessments', label: 'アセスメント', icon: ClipboardList },
+  { to: '/settings', label: '設定', icon: Settings },
 ];
 
-function Layout({ children }: { children: React.ReactNode }) {
-  const navigate = useNavigate();
+function Sidebar({ isOpen, toggleSidebar }: { isOpen: boolean; toggleSidebar: () => void }) {
   const location = useLocation();
-  const currentPath = location.pathname;
-
-  // ログイン画面ではヘッダーとサイドバーを表示しない
-  const isLoginPage = currentPath === "/login";
-
-  if (isLoginPage) {
-    return <>{children}</>;
-  }
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      {/* ヘッダー */}
-      <header className="bg-white shadow fixed w-full z-10">
-        <div className="flex justify-between items-center px-4 py-4">
-          <h1 className="text-xl font-semibold text-gray-900">
-            SHIFT AI管理ポータル
-          </h1>
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon">
-              <Bell className="h-5 w-5" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate("/login")}
-            >
-              <User className="h-5 w-5" />
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      {/* サイドバー */}
-      <aside className="fixed left-0 top-0 w-64 h-full bg-white shadow-lg pt-16">
-        <nav className="p-4">
-          {sidebarItems.map((item, index) => (
-            <Button
-              key={index}
-              variant={currentPath === item.path ? "secondary" : "ghost"}
-              className={`w-full justify-start mb-1 ${
-                currentPath === item.path ? "bg-gray-100" : ""
-              }`}
-              onClick={() => navigate(item.path)}
-            >
-              <item.icon className="mr-2 h-4 w-4" />
-              {item.label}
-            </Button>
+    <aside className={cn(
+      "bg-gray-800 text-white transition-all duration-300 ease-in-out flex flex-col",
+      isOpen ? "w-60" : "w-16"
+    )}>
+      <div className="flex items-center justify-between p-4 h-16 border-b border-gray-700">
+        {isOpen && <span className="text-xl font-semibold">EduAdmin</span>}
+        <Button variant="ghost" size="icon" onClick={toggleSidebar} className="text-white hover:bg-gray-700">
+          {isOpen ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
+        </Button>
+      </div>
+      <nav className="flex-grow mt-4 space-y-1 px-2">
+        <TooltipProvider delayDuration={0}>
+          {navItems.map((item) => (
+            <Tooltip key={item.to}>
+              <TooltipTrigger asChild>
+                <Link
+                  to={item.to}
+                  className={cn(
+                    "flex items-center px-3 py-2.5 rounded-md text-sm font-medium transition-colors",
+                    location.pathname === item.to || (item.to !== '/' && location.pathname.startsWith(item.to + '/'))
+                      ? "bg-gray-900 text-white"
+                      : "text-gray-300 hover:bg-gray-700 hover:text-white",
+                    !isOpen && "justify-center"
+                  )}
+                >
+                  <item.icon size={20} className={cn(isOpen && "mr-3")} />
+                  {isOpen && <span>{item.label}</span>}
+                </Link>
+              </TooltipTrigger>
+              {!isOpen && (
+                <TooltipContent side="right" sideOffset={5}>
+                  {item.label}
+                </TooltipContent>
+              )}
+            </Tooltip>
           ))}
-        </nav>
-      </aside>
-
-      {/* メインコンテンツ */}
-      <main className="pt-16 pl-64">{children}</main>
-    </div>
+        </TooltipProvider>
+      </nav>
+      <div className="p-2 border-t border-gray-700">
+        <TooltipProvider delayDuration={0}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" className={cn(
+                "w-full flex items-center text-gray-300 hover:bg-gray-700 hover:text-white",
+                 !isOpen && "justify-center"
+                 )}>
+                <LogOut size={20} className={cn(isOpen && "mr-3")} />
+                {isOpen && <span>ログアウト</span>}
+              </Button>
+            </TooltipTrigger>
+             {!isOpen && (
+                <TooltipContent side="right" sideOffset={5}>
+                  ログアウト
+                </TooltipContent>
+              )}
+          </Tooltip>
+        </TooltipProvider>
+      </div>
+    </aside>
   );
 }
 
+
 function App() {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true); // Default to open
+
+  const toggleSidebar = () => {
+    setIsSidebarOpen(!isSidebarOpen);
+  };
+
+  // TODO: Implement actual authentication check
+  const isAuthenticated = true; // Assume user is logged in for now
+
+  if (!isAuthenticated) {
+    return (
+      <Router>
+        <Routes>
+          <Route path="*" element={<Login />} />
+        </Routes>
+      </Router>
+    );
+  }
+
   return (
     <Router>
-      <Layout>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/companies" element={<Companies />} />
-          <Route path="/contracts" element={<Contracts />} />
-          <Route path="/assessments" element={<Assessments />} />
-          <Route path="/surveys" element={<Surveys />} />
-          <Route path="/users" element={<UserManagement />} />
-          <Route path="/settings" element={<SettingsPage />} />
-        </Routes>
-      </Layout>
+      <div className="flex h-screen bg-gray-100">
+        <Sidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
+        <main className="flex-1 overflow-x-hidden overflow-y-auto">
+          <div className="p-0"> {/* Removed padding here, apply padding within pages */}
+            <Routes>
+              <Route path="/" element={<Dashboard />} />
+              {/* System Administrator Management */}
+              <Route path="/system-admins" element={<SystemAdminManagement />} /> {/* Renamed route */}
+              <Route path="/system-admins/add" element={<AddSystemAdmin />} /> {/* Added route */}
+              {/* Company Management */}
+              <Route path="/companies" element={<Companies />} />
+              <Route path="/companies/add" element={<AddCompany />} />
+              <Route path="/companies/update/:companyId" element={<UpdateCompany />} />
+              {/* Company Admins */}
+              <Route path="/company-admins" element={<CompanyAdmins />} />
+              <Route path="/company-admins/add" element={<AddCompanyAdmin />} />
+              {/* Contract Management */}
+              <Route path="/contracts" element={<Contracts />} />
+              {/* Surveys */}
+              <Route path="/surveys" element={<Surveys />} />
+              {/* Assessments */}
+              <Route path="/assessments" element={<Assessments />} />
+              <Route path="/assessments/add" element={<AddAssessment />} />
+              <Route path="/assessments/detail/:assessmentId" element={<AssessmentDetail />} />
+              {/* Settings */}
+              <Route path="/settings" element={<SettingsPage />} />
+            </Routes>
+          </div>
+        </main>
+      </div>
     </Router>
   );
 }

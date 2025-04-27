@@ -42,84 +42,134 @@ import {
   Search,
   Filter,
   Plus,
+  AlertTriangle, // For expiry warning icon
 } from "lucide-react";
+import { differenceInDays, parseISO, isBefore, startOfDay } from 'date-fns'; // Import date-fns functions
 
-// サンプルデータ
+// --- Mock Data Update ---
 const contracts = [
   {
     id: "CON-2023-001",
     companyName: "株式会社テクノロジーズ",
     plan: "エンタープライズ",
     startDate: "2023-04-01",
-    endDate: "2024-03-31",
-    status: "active",
+    endDate: "2025-03-31", // Extended date
+    status: "active", // Status will be calculated dynamically
     amount: "¥2,400,000",
+    userCount: 500,
   },
   {
     id: "CON-2023-002",
     companyName: "ABCコンサルティング",
     plan: "ビジネス",
     startDate: "2023-05-15",
-    endDate: "2024-05-14",
+    endDate: "2024-08-10", // Near expiry (within 30 days from today - adjust if needed)
     status: "active",
     amount: "¥1,200,000",
+    userCount: 100,
   },
   {
     id: "CON-2023-003",
     companyName: "グローバルメディア株式会社",
     plan: "スタンダード",
-    startDate: "2023-06-01",
-    endDate: "2024-05-31",
+    startDate: "2024-06-01",
+    endDate: "2024-07-25", // Very near expiry (within 14 days from today - adjust if needed)
     status: "active",
     amount: "¥600,000",
+    userCount: 50,
+  },
+   {
+    id: "CON-2024-004",
+    companyName: "スタートアップX",
+    plan: "スタンダード",
+    startDate: "2024-07-01",
+    endDate: "2024-07-15", // Imminent expiry (within 7 days from today - adjust if needed)
+    status: "active",
+    amount: "¥50,000",
+    userCount: 10,
   },
   {
     id: "CON-2022-042",
     companyName: "フューチャーイノベーション",
     plan: "エンタープライズ",
     startDate: "2022-10-01",
-    endDate: "2023-09-30",
-    status: "expiring",
+    endDate: "2023-09-30", // Expired
+    status: "expired",
     amount: "¥2,400,000",
+    userCount: 450,
   },
   {
     id: "CON-2022-038",
     companyName: "スマートソリューションズ",
     plan: "ビジネス",
     startDate: "2022-08-15",
-    endDate: "2023-08-14",
+    endDate: "2023-08-14", // Expired
     status: "expired",
     amount: "¥1,200,000",
+    userCount: 90,
   },
 ];
+// --- End Mock Data Update ---
 
-export default function Contracts() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [showAddDialog, setShowAddDialog] = useState(false);
+// --- Date & Status Logic ---
+const today = startOfDay(new Date());
 
-  // ステータスに応じたバッジのスタイル
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "active":
-        return <Badge className="bg-green-500">有効</Badge>;
-      case "expiring":
-        return <Badge className="bg-yellow-500">まもなく期限切れ</Badge>;
-      case "expired":
-        return <Badge className="bg-red-500">期限切れ</Badge>;
-      default:
-        return <Badge>{status}</Badge>;
-    }
-  };
+const getExpiryStatus = (endDateString: string): { status: string; daysLeft?: number } => {
+  const endDate = startOfDay(parseISO(endDateString));
+  const daysDiff = differenceInDays(endDate, today);
 
-  // 日付のフォーマット
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
+  if (isBefore(endDate, today)) {
+    return { status: "expired" };
+  }
+  if (daysDiff <= 7) {
+    return { status: "expiring-7", daysLeft: daysDiff };
+  }
+  if (daysDiff <= 14) {
+    return { status: "expiring-14", daysLeft: daysDiff };
+  }
+  if (daysDiff <= 30) {
+    return { status: "expiring-30", daysLeft: daysDiff };
+  }
+  return { status: "active" };
+};
+
+const getStatusBadge = (statusInfo: { status: string; daysLeft?: number }) => {
+  switch (statusInfo.status) {
+    case "active":
+      return <Badge className="bg-green-100 text-green-800 border border-green-300">有効</Badge>;
+    case "expiring-7":
+      return <Badge className="bg-red-100 text-red-800 border border-red-300 flex items-center gap-1"><AlertTriangle size={12} /> 残り{statusInfo.daysLeft}日</Badge>;
+    case "expiring-14":
+      return <Badge className="bg-orange-100 text-orange-800 border border-orange-300 flex items-center gap-1"><AlertTriangle size={12} /> 残り{statusInfo.daysLeft}日</Badge>;
+    case "expiring-30":
+      return <Badge className="bg-yellow-100 text-yellow-800 border border-yellow-300 flex items-center gap-1"><AlertTriangle size={12} /> 残り{statusInfo.daysLeft}日</Badge>;
+    case "expired":
+      return <Badge className="bg-gray-100 text-gray-800 border border-gray-300">期限切れ</Badge>;
+    default:
+      return <Badge>{statusInfo.status}</Badge>;
+  }
+};
+
+const formatDate = (dateString: string) => {
+  try {
+    const date = parseISO(dateString);
     return date.toLocaleDateString("ja-JP", {
       year: "numeric",
       month: "long",
       day: "numeric",
     });
-  };
+  } catch (e) {
+    return "無効な日付";
+  }
+};
+// --- End Date & Status Logic ---
+
+
+export default function Contracts() {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  // Add state for new contract form (if needed for controlled inputs)
+  // const [newContractData, setNewContractData] = useState({ ... });
 
   // 検索フィルタリング
   const filteredContracts = contracts.filter(
@@ -128,6 +178,17 @@ export default function Contracts() {
       contract.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
       contract.plan.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Handle adding a new contract (placeholder)
+  const handleAddContract = () => {
+    // TODO: Get data from dialog inputs and call API
+    console.log("Adding new contract...");
+    // Example: Get data from refs or state
+    // const company = (document.getElementById('company') as HTMLInputElement)?.value;
+    // ... get other fields
+    setShowAddDialog(false); // Close dialog after submission
+    // Show success toast
+  };
 
   return (
     <div className="p-8">
@@ -146,6 +207,7 @@ export default function Contracts() {
             <FileText size={16} />
             レポート
           </Button>
+          {/* --- New Contract Dialog --- */}
           <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
             <DialogTrigger asChild>
               <Button className="flex items-center gap-1">
@@ -160,18 +222,27 @@ export default function Contracts() {
                   新しい契約の詳細情報を入力してください
                 </DialogDescription>
               </DialogHeader>
+              {/* Consider using react-hook-form here for better validation */}
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="company" className="text-right">
                     企業名
                   </Label>
-                  <Input id="company" className="col-span-3" />
+                  {/* TODO: Use a Select or Autocomplete for existing companies */}
+                  <Input id="company" placeholder="株式会社サンプル" className="col-span-3" />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="plan" className="text-right">
                     プラン
                   </Label>
-                  <Input id="plan" className="col-span-3" />
+                   {/* TODO: Use a Select component */}
+                  <Input id="plan" placeholder="スタンダード" className="col-span-3" />
+                </div>
+                 <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="userCount" className="text-right">
+                    ユーザー数
+                  </Label>
+                  <Input id="userCount" type="number" placeholder="50" className="col-span-3" />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="startDate" className="text-right">
@@ -189,7 +260,7 @@ export default function Contracts() {
                   <Label htmlFor="amount" className="text-right">
                     契約金額
                   </Label>
-                  <Input id="amount" className="col-span-3" />
+                  <Input id="amount" placeholder="¥600,000" className="col-span-3" />
                 </div>
               </div>
               <DialogFooter>
@@ -199,10 +270,12 @@ export default function Contracts() {
                 >
                   キャンセル
                 </Button>
-                <Button type="submit">保存</Button>
+                {/* TODO: Add validation before submitting */}
+                <Button type="submit" onClick={handleAddContract}>保存</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
+           {/* --- End New Contract Dialog --- */}
         </div>
       </div>
 
@@ -215,12 +288,13 @@ export default function Contracts() {
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
                 <Input
                   type="search"
-                  placeholder="企業名・契約IDで検索..."
-                  className="pl-8 w-[250px]"
+                  placeholder="企業名・契約ID・プランで検索..."
+                  className="pl-8 w-[300px]" // Increased width
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
+              {/* TODO: Implement filtering logic */}
               <Button variant="outline" size="icon">
                 <Filter className="h-4 w-4" />
               </Button>
@@ -234,6 +308,7 @@ export default function Contracts() {
                 <TableHead>契約ID</TableHead>
                 <TableHead>企業名</TableHead>
                 <TableHead>プラン</TableHead>
+                <TableHead>ユーザー数</TableHead> {/* Added User Count Header */}
                 <TableHead>開始日</TableHead>
                 <TableHead>終了日</TableHead>
                 <TableHead>ステータス</TableHead>
@@ -242,40 +317,55 @@ export default function Contracts() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredContracts.map((contract) => (
-                <TableRow key={contract.id}>
-                  <TableCell className="font-medium">{contract.id}</TableCell>
-                  <TableCell>{contract.companyName}</TableCell>
-                  <TableCell>{contract.plan}</TableCell>
-                  <TableCell>{formatDate(contract.startDate)}</TableCell>
-                  <TableCell>{formatDate(contract.endDate)}</TableCell>
-                  <TableCell>{getStatusBadge(contract.status)}</TableCell>
-                  <TableCell>{contract.amount}</TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>アクション</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem>詳細を表示</DropdownMenuItem>
-                        <DropdownMenuItem>編集</DropdownMenuItem>
-                        <DropdownMenuItem>更新履歴</DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-red-600">
-                          契約解除
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+              {filteredContracts.length > 0 ? (
+                filteredContracts.map((contract) => {
+                  const statusInfo = getExpiryStatus(contract.endDate);
+                  return (
+                    <TableRow key={contract.id} data-status={statusInfo.status}> {/* Optional: Add data attribute for potential row styling */}
+                      <TableCell className="font-medium">{contract.id}</TableCell>
+                      <TableCell>{contract.companyName}</TableCell>
+                      <TableCell>{contract.plan}</TableCell>
+                      <TableCell>{contract.userCount}</TableCell> {/* Added User Count Cell */}
+                      <TableCell>{formatDate(contract.startDate)}</TableCell>
+                      <TableCell>{formatDate(contract.endDate)}</TableCell>
+                      <TableCell>{getStatusBadge(statusInfo)}</TableCell>
+                      <TableCell>{contract.amount}</TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>アクション</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem>詳細を表示</DropdownMenuItem>
+                            {/* TODO: Link to an edit page/modal */}
+                            <DropdownMenuItem>編集</DropdownMenuItem>
+                            {/* TODO: Implement history view */}
+                            <DropdownMenuItem>更新履歴</DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem className="text-red-600">
+                              契約解除
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={9} className="h-24 text-center"> {/* Updated colSpan */}
+                    契約が見つかりません。
                   </TableCell>
                 </TableRow>
-              ))}
+              )}
             </TableBody>
           </Table>
         </CardContent>
+        {/* TODO: Add Pagination if needed */}
       </Card>
     </div>
   );

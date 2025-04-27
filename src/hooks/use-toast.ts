@@ -1,6 +1,9 @@
 import * as React from 'react';
 
-import type { ToastActionElement, ToastProps } from '@/components/ui/toast';
+// Import UI components from their actual location
+import type { ToastProps } from '@/components/ui/toast';
+import type { ToastActionElement } from '@/components/ui/toast';
+
 
 const TOAST_LIMIT = 1;
 const TOAST_REMOVE_DELAY = 1000000;
@@ -68,7 +71,8 @@ const addToRemoveQueue = (toastId: string) => {
   toastTimeouts.set(toastId, timeout);
 };
 
-export const reducer = (state: State, action: Action): State => {
+// Reducer should be defined before dispatch uses it
+const reducer = (state: State, action: Action): State => {
   switch (action.type) {
     case 'ADD_TOAST':
       return {
@@ -87,8 +91,6 @@ export const reducer = (state: State, action: Action): State => {
     case 'DISMISS_TOAST': {
       const { toastId } = action;
 
-      // ! Side effects ! - This could be extracted into a dismissToast() action,
-      // but I'll keep it here for simplicity
       if (toastId) {
         addToRemoveQueue(toastId);
       } else {
@@ -122,6 +124,7 @@ export const reducer = (state: State, action: Action): State => {
       };
   }
 };
+
 
 const listeners: Array<(state: State) => void> = [];
 
@@ -180,9 +183,10 @@ function useToast() {
 
   return {
     ...state,
-    toast,
+    toast, // Return the toast function from the hook
     dismiss: (toastId?: string) => dispatch({ type: 'DISMISS_TOAST', toastId }),
   };
 }
 
+// Export the hook and the standalone function
 export { useToast, toast };
