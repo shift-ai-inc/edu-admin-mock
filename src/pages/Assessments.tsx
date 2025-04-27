@@ -1,12 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from 'react-router-dom'; // Import useNavigate
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
+  Card
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -28,27 +23,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   MoreHorizontal,
   Search,
-  Filter,
   Plus,
   Copy,
   BarChart3,
-  FileText,
-  Edit,
-  Eye, // Added Eye icon for view/detail
+  Eye,
 } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"; // Import Tooltip components
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 
 // サンプルデータ (Add more fields based on AddAssessment form)
@@ -120,9 +103,6 @@ const assessments = [
   },
 ];
 
-// サンプル設問データ (Keep for potential future use in detail view)
-// const questions = [ ... ]; // Keep commented out or remove if not used here
-
 export default function Assessments() {
   const navigate = useNavigate(); // Initialize navigate
   const [searchTerm, setSearchTerm] = useState("");
@@ -172,22 +152,14 @@ export default function Assessments() {
   };
 
   // Placeholder actions (keep for now or remove if handled on detail page)
-  const handleEditQuestions = (assessmentId: string) => {
-    console.log("Navigate to question editor for:", assessmentId);
-    navigate(`/assessments/detail/${assessmentId}`); // Go to detail page where questions can be edited
-  };
   const handleAnalyzeResults = (assessmentId: string) => {
     console.log("Navigate to results analysis for:", assessmentId);
     // navigate(`/assessments/${assessmentId}/results`);
   };
+
   const handleDuplicate = (assessmentId: string) => {
     console.log("Duplicate assessment:", assessmentId);
   };
-  const handleChangeStatus = (assessmentId: string, currentStatus: string) => {
-    console.log("Change status for:", assessmentId, "from", currentStatus);
-    // This might now happen on the detail/edit page
-  };
-
 
   return (
     <div className="p-8">
@@ -221,99 +193,73 @@ export default function Assessments() {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            {/* TODO: Implement Filter */}
-            {/* <Button variant="outline" size="icon">
-              <Filter className="h-4 w-4" />
-            </Button> */}
           </div>
         </div>
 
         <TabsContent value={activeTab} className="mt-0">
           <Card>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>ID</TableHead>
-                    <TableHead>タイトル</TableHead>
-                    <TableHead>タイプ</TableHead>
-                    <TableHead>設問数</TableHead>
-                    <TableHead>最新Ver.</TableHead> {/* Added Version Column */}
-                    <TableHead>ステータス</TableHead>
-                    <TableHead>作成/更新日</TableHead> {/* Changed Label */}
-                    <TableHead className="w-[50px]"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredAssessments.length === 0 ? (
-                     <TableRow>
-                       <TableCell colSpan={8} className="h-24 text-center"> {/* Increased colSpan */}
-                         該当するアセスメントが見つかりません。
-                       </TableCell>
-                     </TableRow>
-                   ) : (
-                    filteredAssessments.map((assessment) => (
-                      <TableRow key={assessment.id}>
-                        <TableCell className="font-medium">{assessment.id}</TableCell>
-                        <TableCell>{assessment.title}</TableCell>
-                        <TableCell>{assessment.type}</TableCell>
-                        <TableCell>{assessment.questions}</TableCell>
-                        <TableCell>v{assessment.version}</TableCell> {/* Display Version */}
-                        <TableCell>{getStatusBadge(assessment.status)}</TableCell>
-                        <TableCell>{formatDate(assessment.createdAt)}</TableCell> {/* Show creation date for now */}
-                        <TableCell>
-                          <TooltipProvider delayDuration={0}>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon">
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuLabel>アクション</DropdownMenuLabel>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem onClick={() => handleViewDetails(assessment.id)}>
-                                  <Eye className="mr-2 h-4 w-4" />
-                                  詳細表示/編集
-                                </DropdownMenuItem>
-                                {/* <DropdownMenuItem onClick={() => handleEditQuestions(assessment.id)}>
-                                  <FileText className="mr-2 h-4 w-4" />
-                                  設問編集
-                                </DropdownMenuItem> */}
-                                <DropdownMenuItem onClick={() => handleAnalyzeResults(assessment.id)}>
-                                  <BarChart3 className="mr-2 h-4 w-4" />
-                                  結果分析
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleDuplicate(assessment.id)}>
-                                  <Copy className="mr-2 h-4 w-4" />
-                                  複製
-                                </DropdownMenuItem>
-                                {/* Status change might be better on detail page */}
-                                {/* <DropdownMenuSeparator />
-                                {assessment.status === "published" ? (
-                                  <DropdownMenuItem onClick={() => handleChangeStatus(assessment.id, 'published')}>
-                                    アーカイブする
-                                  </DropdownMenuItem>
-                                ) : assessment.status === "draft" ? (
-                                  <DropdownMenuItem onClick={() => handleChangeStatus(assessment.id, 'draft')}>
-                                    公開する
-                                  </DropdownMenuItem>
-                                ) : ( // archived
-                                  <DropdownMenuItem onClick={() => handleChangeStatus(assessment.id, 'archived')}>
-                                    下書きに戻す
-                                  </DropdownMenuItem>
-                                )} */}
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TooltipProvider>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </CardContent>
-             {/* TODO: Add Pagination if needed */}
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>ID</TableHead>
+                  <TableHead>タイトル</TableHead>
+                  <TableHead>タイプ</TableHead>
+                  <TableHead>設問数</TableHead>
+                  <TableHead>最新Ver.</TableHead> {/* Added Version Column */}
+                  <TableHead>ステータス</TableHead>
+                  <TableHead>作成/更新日</TableHead> {/* Changed Label */}
+                  <TableHead className="w-[50px]"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredAssessments.length === 0 ? (
+                   <TableRow>
+                     <TableCell colSpan={8} className="h-24 text-center"> {/* Increased colSpan */}
+                       該当するアセスメントが見つかりません。
+                     </TableCell>
+                   </TableRow>
+                 ) : (
+                  filteredAssessments.map((assessment) => (
+                    <TableRow key={assessment.id}>
+                      <TableCell className="font-medium">{assessment.id}</TableCell>
+                      <TableCell>{assessment.title}</TableCell>
+                      <TableCell>{assessment.type}</TableCell>
+                      <TableCell>{assessment.questions}</TableCell>
+                      <TableCell>v{assessment.version}</TableCell> {/* Display Version */}
+                      <TableCell>{getStatusBadge(assessment.status)}</TableCell>
+                      <TableCell>{formatDate(assessment.createdAt)}</TableCell> {/* Show creation date for now */}
+                      <TableCell>
+                        <TooltipProvider delayDuration={0}>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuLabel>アクション</DropdownMenuLabel>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => handleViewDetails(assessment.id)}>
+                                <Eye className="mr-2 h-4 w-4" />
+                                詳細表示/編集
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleAnalyzeResults(assessment.id)}>
+                                <BarChart3 className="mr-2 h-4 w-4" />
+                                結果分析
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleDuplicate(assessment.id)}>
+                                <Copy className="mr-2 h-4 w-4" />
+                                複製
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TooltipProvider>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
           </Card>
         </TabsContent>
       </Tabs>

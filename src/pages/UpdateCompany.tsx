@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { Button, buttonVariants } from '@/components/ui/button'; // Import buttonVariants
 import {
@@ -30,11 +30,10 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { toast } from '@/hooks/use-toast';
 import { useParams } from 'react-router-dom'; // To get companyId from URL
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils'; // Import cn
 
 // Define the validation schema using Zod
@@ -426,7 +425,7 @@ export default function UpdateCompany() {
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel onClick={() => form.setValue('maxUsers', initialMaxUsers)}>キャンセル</AlertDialogCancel>
+                <AlertDialogCancel onClick={() => form.setValue('maxUsers', initialMaxUsers || 0)}>キャンセル</AlertDialogCancel>
                 <AlertDialogAction onClick={() => submitData(form.getValues())}>
                   変更を確認して続行
                 </AlertDialogAction>

@@ -9,14 +9,6 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"; // Import Tabs
 import {
   DropdownMenu,
@@ -27,7 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { ArrowLeft, Eye, GitCompareArrows, History, Edit, CheckCircle, Settings2, Send } from 'lucide-react'; // Added/updated icons
+import { ArrowLeft, Eye, GitCompareArrows, Edit, CheckCircle, Settings2, Send } from 'lucide-react'; // Added/updated icons
 
 // --- Mock Data Types ---
 interface AssessmentVersion {
@@ -91,19 +83,19 @@ const getAssessmentVersions = (assessmentId: string): AssessmentVersion[] => {
   console.log("Fetching versions for:", assessmentId); // Simulate API call
   if (assessmentId === 'ASS-001') {
     return [
-      { versionNumber: 3, createdAt: "2024-07-20", author: "田中 太郎", status: "published", questionCount: 45 },
-      { versionNumber: 2, createdAt: "2024-05-10", author: "佐藤 花子", status: "archived", questionCount: 40 },
-      { versionNumber: 1, createdAt: "2023-02-15", author: "田中 太郎", status: "archived", questionCount: 35 },
+      { versionNumber: 3, createdAt: "2024-07-20", author: "田中 太郎", status: "published" as const, questionCount: 45 },
+      { versionNumber: 2, createdAt: "2024-05-10", author: "佐藤 花子", status: "archived" as const, questionCount: 40 },
+      { versionNumber: 1, createdAt: "2023-02-15", author: "田中 太郎", status: "archived" as const, questionCount: 35 },
     ].sort((a, b) => b.versionNumber - a.versionNumber); // Ensure descending order
   }
   if (assessmentId === 'ASS-002') {
      return [
-      { versionNumber: 2, createdAt: "2023-03-10", author: "鈴木 一郎", status: "published", questionCount: 60 },
-      { versionNumber: 1, createdAt: "2023-01-05", author: "鈴木 一郎", status: "archived", questionCount: 55 },
+      { versionNumber: 2, createdAt: "2023-03-10", author: "鈴木 一郎", status: "published" as const, questionCount: 60 },
+      { versionNumber: 1, createdAt: "2023-01-05", author: "鈴木 一郎", status: "archived" as const, questionCount: 55 },
     ].sort((a, b) => b.versionNumber - a.versionNumber);
   }
   return [
-     { versionNumber: 1, createdAt: "2023-10-01", author: "管理者", status: "draft", questionCount: 10 },
+     { versionNumber: 1, createdAt: "2023-10-01", author: "管理者", status: "draft" as const, questionCount: 10 },
   ].sort((a, b) => b.versionNumber - a.versionNumber);
 };
 
@@ -220,8 +212,6 @@ export default function AssessmentDetail() {
   if (!assessment || versions.length === 0 || selectedVersionNumber === null) {
     return <div className="p-8">読み込み中またはデータがありません...</div>;
   }
-
-  const selectedVersion = versions.find(v => v.versionNumber === selectedVersionNumber);
 
   return (
     <div className="p-8 space-y-6">

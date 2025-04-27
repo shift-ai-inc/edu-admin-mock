@@ -7,13 +7,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -44,7 +38,7 @@ import {
   Plus,
   AlertTriangle, // For expiry warning icon
 } from "lucide-react";
-import { differenceInDays, parseISO, isBefore, startOfDay } from 'date-fns'; // Import date-fns functions
+import { differenceInDays, parseISO, isBefore, startOfDay } from "date-fns"; // Import date-fns functions
 
 // --- Mock Data Update ---
 const contracts = [
@@ -78,7 +72,7 @@ const contracts = [
     amount: "¥600,000",
     userCount: 50,
   },
-   {
+  {
     id: "CON-2024-004",
     companyName: "スタートアップX",
     plan: "スタンダード",
@@ -114,7 +108,9 @@ const contracts = [
 // --- Date & Status Logic ---
 const today = startOfDay(new Date());
 
-const getExpiryStatus = (endDateString: string): { status: string; daysLeft?: number } => {
+const getExpiryStatus = (
+  endDateString: string
+): { status: string; daysLeft?: number } => {
   const endDate = startOfDay(parseISO(endDateString));
   const daysDiff = differenceInDays(endDate, today);
 
@@ -136,15 +132,35 @@ const getExpiryStatus = (endDateString: string): { status: string; daysLeft?: nu
 const getStatusBadge = (statusInfo: { status: string; daysLeft?: number }) => {
   switch (statusInfo.status) {
     case "active":
-      return <Badge className="bg-green-100 text-green-800 border border-green-300">有効</Badge>;
+      return (
+        <Badge className="bg-green-100 text-green-800 border border-green-300">
+          有効
+        </Badge>
+      );
     case "expiring-7":
-      return <Badge className="bg-red-100 text-red-800 border border-red-300 flex items-center gap-1"><AlertTriangle size={12} /> 残り{statusInfo.daysLeft}日</Badge>;
+      return (
+        <Badge className="bg-red-100 text-red-800 border border-red-300 flex items-center gap-1">
+          <AlertTriangle size={12} /> 残り{statusInfo.daysLeft}日
+        </Badge>
+      );
     case "expiring-14":
-      return <Badge className="bg-orange-100 text-orange-800 border border-orange-300 flex items-center gap-1"><AlertTriangle size={12} /> 残り{statusInfo.daysLeft}日</Badge>;
+      return (
+        <Badge className="bg-orange-100 text-orange-800 border border-orange-300 flex items-center gap-1">
+          <AlertTriangle size={12} /> 残り{statusInfo.daysLeft}日
+        </Badge>
+      );
     case "expiring-30":
-      return <Badge className="bg-yellow-100 text-yellow-800 border border-yellow-300 flex items-center gap-1"><AlertTriangle size={12} /> 残り{statusInfo.daysLeft}日</Badge>;
+      return (
+        <Badge className="bg-yellow-100 text-yellow-800 border border-yellow-300 flex items-center gap-1">
+          <AlertTriangle size={12} /> 残り{statusInfo.daysLeft}日
+        </Badge>
+      );
     case "expired":
-      return <Badge className="bg-gray-100 text-gray-800 border border-gray-300">期限切れ</Badge>;
+      return (
+        <Badge className="bg-gray-100 text-gray-800 border border-gray-300">
+          期限切れ
+        </Badge>
+      );
     default:
       return <Badge>{statusInfo.status}</Badge>;
   }
@@ -163,7 +179,6 @@ const formatDate = (dateString: string) => {
   }
 };
 // --- End Date & Status Logic ---
-
 
 export default function Contracts() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -229,20 +244,33 @@ export default function Contracts() {
                     企業名
                   </Label>
                   {/* TODO: Use a Select or Autocomplete for existing companies */}
-                  <Input id="company" placeholder="株式会社サンプル" className="col-span-3" />
+                  <Input
+                    id="company"
+                    placeholder="株式会社サンプル"
+                    className="col-span-3"
+                  />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="plan" className="text-right">
                     プラン
                   </Label>
-                   {/* TODO: Use a Select component */}
-                  <Input id="plan" placeholder="スタンダード" className="col-span-3" />
+                  {/* TODO: Use a Select component */}
+                  <Input
+                    id="plan"
+                    placeholder="スタンダード"
+                    className="col-span-3"
+                  />
                 </div>
-                 <div className="grid grid-cols-4 items-center gap-4">
+                <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="userCount" className="text-right">
                     ユーザー数
                   </Label>
-                  <Input id="userCount" type="number" placeholder="50" className="col-span-3" />
+                  <Input
+                    id="userCount"
+                    type="number"
+                    placeholder="50"
+                    className="col-span-3"
+                  />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="startDate" className="text-right">
@@ -260,7 +288,11 @@ export default function Contracts() {
                   <Label htmlFor="amount" className="text-right">
                     契約金額
                   </Label>
-                  <Input id="amount" placeholder="¥600,000" className="col-span-3" />
+                  <Input
+                    id="amount"
+                    placeholder="¥600,000"
+                    className="col-span-3"
+                  />
                 </div>
               </div>
               <DialogFooter>
@@ -271,11 +303,13 @@ export default function Contracts() {
                   キャンセル
                 </Button>
                 {/* TODO: Add validation before submitting */}
-                <Button type="submit" onClick={handleAddContract}>保存</Button>
+                <Button type="submit" onClick={handleAddContract}>
+                  保存
+                </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
-           {/* --- End New Contract Dialog --- */}
+          {/* --- End New Contract Dialog --- */}
         </div>
       </div>
 
@@ -308,7 +342,8 @@ export default function Contracts() {
                 <TableHead>契約ID</TableHead>
                 <TableHead>企業名</TableHead>
                 <TableHead>プラン</TableHead>
-                <TableHead>ユーザー数</TableHead> {/* Added User Count Header */}
+                <TableHead>ユーザー数</TableHead>{" "}
+                {/* Added User Count Header */}
                 <TableHead>開始日</TableHead>
                 <TableHead>終了日</TableHead>
                 <TableHead>ステータス</TableHead>
@@ -321,11 +356,16 @@ export default function Contracts() {
                 filteredContracts.map((contract) => {
                   const statusInfo = getExpiryStatus(contract.endDate);
                   return (
-                    <TableRow key={contract.id} data-status={statusInfo.status}> {/* Optional: Add data attribute for potential row styling */}
-                      <TableCell className="font-medium">{contract.id}</TableCell>
+                    <TableRow key={contract.id} data-status={statusInfo.status}>
+                      {" "}
+                      {/* Optional: Add data attribute for potential row styling */}
+                      <TableCell className="font-medium">
+                        {contract.id}
+                      </TableCell>
                       <TableCell>{contract.companyName}</TableCell>
                       <TableCell>{contract.plan}</TableCell>
-                      <TableCell>{contract.userCount}</TableCell> {/* Added User Count Cell */}
+                      <TableCell>{contract.userCount}</TableCell>{" "}
+                      {/* Added User Count Cell */}
                       <TableCell>{formatDate(contract.startDate)}</TableCell>
                       <TableCell>{formatDate(contract.endDate)}</TableCell>
                       <TableCell>{getStatusBadge(statusInfo)}</TableCell>
@@ -357,7 +397,9 @@ export default function Contracts() {
                 })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={9} className="h-24 text-center"> {/* Updated colSpan */}
+                  <TableCell colSpan={9} className="h-24 text-center">
+                    {" "}
+                    {/* Updated colSpan */}
                     契約が見つかりません。
                   </TableCell>
                 </TableRow>
