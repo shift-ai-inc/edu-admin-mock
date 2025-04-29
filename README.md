@@ -1,30 +1,33 @@
-<<<<<<< HEAD
-# edu-admin-mock
-=======
 ## demo
-https://delightful-donut-c57811.netlify.app/system-admins
+
+https://delightful-donut-c57811.netlify.app
 
 ---
+
 1. **プロジェクト作成**
-   - bolt.newを使用して雛形を作成
+
+   - bolt.new を使用して雛形を作成
    - 作成したプロジェクトをローカル環境に取得
 
 2. **ドキュメント作成**
-   - Claude Codeを使用してプロジェクトを読み込み
+
+   - Claude Code を使用してプロジェクトを読み込み
    - 必要なドキュメントを自動生成
    - `/docs`ディレクトリを作成し、生成したドキュメントを配置
 
 3. **開発準備**
-   - bolt.diyまたはCursorでプロジェクトを開く
+
+   - bolt.diy または Cursor でプロジェクトを開く
    - 作成したドキュメントを読み込む
 
 4. **プロンプト作成**
+
    - スプレッドシートを参考にしてプロンプトを作成
 
 5. **実行と改善**
    - プロジェクトを実行
-   - bolt.diyやClaude Codeを使用して必要な修正を加える
+   - bolt.diy や Claude Code を使用して必要な修正を加える
 
 ## 注意事項
+
 各ステップで問題が発生した場合は、ドキュメントを参照するか、サポートに連絡してください。
->>>>>>> f61c78c03b29cc045a84cab2f54cd6d0e086d1bc
