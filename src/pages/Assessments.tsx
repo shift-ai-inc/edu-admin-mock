@@ -1,8 +1,6 @@
 import { useState } from "react";
-import { useNavigate } from 'react-router-dom'; // Import useNavigate
-import {
-  Card
-} from "@/components/ui/card";
+import { useNavigate } from "react-router-dom"; // Import useNavigate
+import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
@@ -23,16 +21,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+
 import {
   MoreHorizontal,
   Search,
   Plus,
   Copy,
   BarChart3,
-  Eye,
+  Edit, // Added Edit icon
+  Eye, // Added Eye icon
 } from "lucide-react";
-import { TooltipProvider } from "@/components/ui/tooltip";
-
+import { TooltipProvider } from "@/components/ui/tooltip"; // Import Tooltip components
 
 // サンプルデータ (Add more fields based on AddAssessment form)
 const assessments = [
@@ -103,6 +102,9 @@ const assessments = [
   },
 ];
 
+// サンプル設問データ (Keep for potential future use in detail view)
+// const questions = [ ... ]; // Keep commented out or remove if not used here
+
 export default function Assessments() {
   const navigate = useNavigate(); // Initialize navigate
   const [searchTerm, setSearchTerm] = useState("");
@@ -112,8 +114,8 @@ export default function Assessments() {
   const filteredAssessments = assessments.filter((assessment) => {
     // タブによるフィルタリング
     if (activeTab !== "all" && assessment.status !== activeTab) {
-      if (activeTab === 'archived' && assessment.status === 'archived') {
-         // keep going
+      if (activeTab === "archived" && assessment.status === "archived") {
+        // keep going
       } else if (activeTab !== assessment.status) {
         return false;
       }
@@ -129,21 +131,29 @@ export default function Assessments() {
   // ステータスに応じたバッジのスタイル
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "published": return <Badge variant="default">公開中</Badge>;
-      case "draft": return <Badge variant="outline">下書き</Badge>;
-      case "archived": return <Badge variant="secondary">アーカイブ</Badge>;
-      default: return <Badge>{status}</Badge>;
+      case "published":
+        return <Badge variant="default">公開中</Badge>;
+      case "draft":
+        return <Badge variant="outline">下書き</Badge>;
+      case "archived":
+        return <Badge variant="secondary">アーカイブ</Badge>;
+      default:
+        return <Badge>{status}</Badge>;
     }
   };
 
   // 日付のフォーマット
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString("ja-JP", { year: "numeric", month: "long", day: "numeric" });
+    return date.toLocaleDateString("ja-JP", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
   };
 
   const handleAddNew = () => {
-    navigate('/assessments/add');
+    navigate("/assessments/add");
   };
 
   // Navigate to the detail page
@@ -151,12 +161,33 @@ export default function Assessments() {
     navigate(`/assessments/detail/${assessmentId}`);
   };
 
-  // Placeholder actions (keep for now or remove if handled on detail page)
+  // Navigate to the edit page
+  const handleEdit = (assessmentId: string) => {
+    navigate(`/assessments/edit/${assessmentId}`);
+  };
+
+  // Row click handler (still navigates to details)
+  const handleRowClick = (
+    assessmentId: string,
+    event: React.MouseEvent<HTMLTableRowElement, MouseEvent>
+  ) => {
+    // Prevent navigation if clicking on interactive elements like buttons, dropdown triggers etc.
+    const target = event.target as HTMLElement;
+    if (
+      target.closest(
+        'button, [role="button"], [role="menuitem"], [data-state="open"]'
+      )
+    ) {
+      return;
+    }
+    handleViewDetails(assessmentId);
+  };
+
+  // Placeholder actions
   const handleAnalyzeResults = (assessmentId: string) => {
     console.log("Navigate to results analysis for:", assessmentId);
     // navigate(`/assessments/${assessmentId}/results`);
   };
-
   const handleDuplicate = (assessmentId: string) => {
     console.log("Duplicate assessment:", assessmentId);
   };
@@ -165,8 +196,12 @@ export default function Assessments() {
     <div className="p-8">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">アセスメント管理</h1>
-          <p className="text-gray-500 mt-1">企業に提供するアセスメントの作成と管理</p>
+          <h1 className="text-2xl font-semibold text-gray-900">
+            アセスメント管理
+          </h1>
+          <p className="text-gray-500 mt-1">
+            企業に提供するアセスメントの作成と管理
+          </p>
         </div>
         <Button className="flex items-center gap-1" onClick={handleAddNew}>
           <Plus size={16} />
@@ -174,7 +209,11 @@ export default function Assessments() {
         </Button>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="space-y-4"
+      >
         <div className="flex justify-between items-center">
           <TabsList>
             <TabsTrigger value="all">すべて</TabsTrigger>
@@ -193,73 +232,134 @@ export default function Assessments() {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
+            {/* TODO: Implement Filter */}
+            {/* <Button variant="outline" size="icon">
+              <Filter className="h-4 w-4" />
+            </Button> */}
           </div>
         </div>
 
         <TabsContent value={activeTab} className="mt-0">
           <Card>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>ID</TableHead>
-                  <TableHead>タイトル</TableHead>
-                  <TableHead>タイプ</TableHead>
-                  <TableHead>設問数</TableHead>
-                  <TableHead>最新Ver.</TableHead> {/* Added Version Column */}
-                  <TableHead>ステータス</TableHead>
-                  <TableHead>作成/更新日</TableHead> {/* Changed Label */}
-                  <TableHead className="w-[50px]"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredAssessments.length === 0 ? (
-                   <TableRow>
-                     <TableCell colSpan={8} className="h-24 text-center"> {/* Increased colSpan */}
-                       該当するアセスメントが見つかりません。
-                     </TableCell>
-                   </TableRow>
-                 ) : (
-                  filteredAssessments.map((assessment) => (
-                    <TableRow key={assessment.id}>
-                      <TableCell className="font-medium">{assessment.id}</TableCell>
-                      <TableCell>{assessment.title}</TableCell>
-                      <TableCell>{assessment.type}</TableCell>
-                      <TableCell>{assessment.questions}</TableCell>
-                      <TableCell>v{assessment.version}</TableCell> {/* Display Version */}
-                      <TableCell>{getStatusBadge(assessment.status)}</TableCell>
-                      <TableCell>{formatDate(assessment.createdAt)}</TableCell> {/* Show creation date for now */}
-                      <TableCell>
-                        <TooltipProvider delayDuration={0}>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuLabel>アクション</DropdownMenuLabel>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem onClick={() => handleViewDetails(assessment.id)}>
-                                <Eye className="mr-2 h-4 w-4" />
-                                詳細表示/編集
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleAnalyzeResults(assessment.id)}>
-                                <BarChart3 className="mr-2 h-4 w-4" />
-                                結果分析
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleDuplicate(assessment.id)}>
-                                <Copy className="mr-2 h-4 w-4" />
-                                複製
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TooltipProvider>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>ID</TableHead>
+                    <TableHead>タイトル</TableHead>
+                    <TableHead>タイプ</TableHead>
+                    <TableHead>設問数</TableHead>
+                    <TableHead>最新Ver.</TableHead> {/* Added Version Column */}
+                    <TableHead>ステータス</TableHead>
+                    <TableHead>作成/更新日</TableHead> {/* Changed Label */}
+                    <TableHead className="w-[50px]"></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredAssessments.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={8} className="h-24 text-center">
+                        {" "}
+                        {/* Increased colSpan */}
+                        該当するアセスメントが見つかりません。
                       </TableCell>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+                  ) : (
+                    filteredAssessments.map((assessment) => (
+                      <TableRow
+                        key={assessment.id}
+                        onClick={(e) => handleRowClick(assessment.id, e)} // Add onClick handler
+                        className="cursor-pointer hover:bg-muted/50" // Add hover effect
+                      >
+                        <TableCell className="font-medium">
+                          {assessment.id}
+                        </TableCell>
+                        <TableCell>{assessment.title}</TableCell>
+                        <TableCell>{assessment.type}</TableCell>
+                        <TableCell>{assessment.questions}</TableCell>
+                        <TableCell>v{assessment.version}</TableCell>{" "}
+                        {/* Display Version */}
+                        <TableCell>
+                          {getStatusBadge(assessment.status)}
+                        </TableCell>
+                        <TableCell>
+                          {formatDate(assessment.createdAt)}
+                        </TableCell>{" "}
+                        {/* Show creation date for now */}
+                        <TableCell>
+                          <TooltipProvider delayDuration={0}>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                {/* Stop propagation to prevent row click when opening menu */}
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>
+                                  アクション
+                                </DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleViewDetails(assessment.id);
+                                  }}
+                                >
+                                  {" "}
+                                  {/* Stop propagation */}
+                                  <Eye className="mr-2 h-4 w-4" />
+                                  詳細表示
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleEdit(assessment.id);
+                                  }}
+                                >
+                                  {" "}
+                                  {/* Stop propagation */}
+                                  <Edit className="mr-2 h-4 w-4" />
+                                  編集
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleAnalyzeResults(assessment.id);
+                                  }}
+                                >
+                                  {" "}
+                                  {/* Stop propagation */}
+                                  <BarChart3 className="mr-2 h-4 w-4" />
+                                  結果分析
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDuplicate(assessment.id);
+                                  }}
+                                >
+                                  {" "}
+                                  {/* Stop propagation */}
+                                  <Copy className="mr-2 h-4 w-4" />
+                                  複製
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TooltipProvider>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+            {/* TODO: Add Pagination if needed */}
           </Card>
         </TabsContent>
       </Tabs>

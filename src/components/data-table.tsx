@@ -10,6 +10,7 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
+  Row, // Import Row type
 } from '@tanstack/react-table';
 
 import {
@@ -22,26 +23,22 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-// Optional: Add dropdown for column visibility if needed
-// import {
-//   DropdownMenu,
-//   DropdownMenuCheckboxItem,
-//   DropdownMenuContent,
-//   DropdownMenuTrigger,
-// } from "@/components/ui/dropdown-menu"
+import { cn } from '@/lib/utils'; // Import cn for conditional classes
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   filterInputPlaceholder?: string;
   filterColumnId?: string; // ID of the column to filter on
+  onRowClick?: (row: Row<TData>) => void; // Add onRowClick prop
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
   filterInputPlaceholder = 'Filter...',
-  filterColumnId = '', // Default to no specific column filter if not provided
+  filterColumnId = '',
+  onRowClick, // Destructure onRowClick
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -62,6 +59,10 @@ export function DataTable<TData, TValue>({
     getFilteredRowModel: getFilteredRowModel(),
      onColumnVisibilityChange: setColumnVisibility,
      onRowSelectionChange: setRowSelection,
+    // Enable row selection even if the checkbox column is removed,
+    // as it might be used internally or for future features.
+    // If row selection is definitely not needed, set this to false.
+    enableRowSelection: true,
     state: {
       sorting,
       columnFilters,
@@ -69,6 +70,23 @@ export function DataTable<TData, TValue>({
       rowSelection,
     },
   });
+
+  const handleRowClick = (row: Row<TData>, event: React.MouseEvent<HTMLTableRowElement, MouseEvent>) => {
+    if (!onRowClick) return;
+
+    // Prevent navigation if clicking on interactive elements like buttons, inputs, dropdown triggers etc.
+    const target = event.target as HTMLElement;
+    // Check if the click target is inside a button, input, select, textarea, or has a role indicating interaction
+    // Added check for elements within dropdown menus ([role="menuitem"], [data-state="open"])
+    if (
+      target.closest('button, input, select, textarea, [role="button"], [role="checkbox"], [role="menuitem"], [data-state="open"]') // Check common interactive elements and dropdown triggers/content
+    ) {
+      return;
+    }
+
+    onRowClick(row);
+  };
+
 
   return (
     <div>
@@ -84,34 +102,7 @@ export function DataTable<TData, TValue>({
             className="max-w-sm"
             />
             {/* Optional: Column Visibility Dropdown */}
-            {/* <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="ml-auto">
-                Columns
-                </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-                {table
-                .getAllColumns()
-                .filter(
-                    (column) => column.getCanHide()
-                )
-                .map((column) => {
-                    return (
-                    <DropdownMenuCheckboxItem
-                        key={column.id}
-                        className="capitalize"
-                        checked={column.getIsVisible()}
-                        onCheckedChange={(value) =>
-                        column.toggleVisibility(!!value)
-                        }
-                    >
-                        {column.id}
-                    </DropdownMenuCheckboxItem>
-                    )
-                })}
-            </DropdownMenuContent>
-            </DropdownMenu> */}
+            {/* ... */}
         </div>
       )}
 
@@ -142,6 +133,10 @@ export function DataTable<TData, TValue>({
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && 'selected'}
+                  onClick={(e) => handleRowClick(row, e)} // Add onClick handler
+                  className={cn(
+                    onRowClick && "cursor-pointer hover:bg-muted/50" // Add hover effect if clickable
+                  )}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
@@ -169,9 +164,13 @@ export function DataTable<TData, TValue>({
 
       {/* Pagination */}
       <div className="flex items-center justify-end space-x-2 py-4">
-         <div className="flex-1 text-sm text-muted-foreground">
+         {/* Removed the selected row count display as the selection mechanism (checkbox) is gone */}
+         {/* <div className="flex-1 text-sm text-muted-foreground">
             {table.getFilteredSelectedRowModel().rows.length} of{" "}
             {table.getFilteredRowModel().rows.length} row(s) selected.
+        </div> */}
+        <div className="flex-1 text-sm text-muted-foreground">
+            {table.getFilteredRowModel().rows.length} row(s) found. {/* Display total filtered rows */}
         </div>
         <Button
           variant="outline"

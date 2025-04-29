@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom"; // Import useNavigate
 import {
   Table,
   TableBody,
@@ -10,14 +11,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+// Removed DropdownMenu imports as they are no longer needed
 import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
@@ -30,7 +24,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import {
-  MoreHorizontal,
+  // Removed MoreHorizontal
   Download,
   FileText,
   Search,
@@ -38,7 +32,15 @@ import {
   Plus,
   AlertTriangle, // For expiry warning icon
 } from "lucide-react";
-import { differenceInDays, parseISO, isBefore, startOfDay } from "date-fns"; // Import date-fns functions
+import {
+  differenceInDays,
+  parseISO,
+  isBefore,
+  startOfDay,
+  isValid,
+  format,
+} from "date-fns"; // Import date-fns functions
+import { ja } from "date-fns/locale"; // Import Japanese locale
 
 // --- Mock Data Update ---
 const contracts = [
@@ -111,22 +113,28 @@ const today = startOfDay(new Date());
 const getExpiryStatus = (
   endDateString: string
 ): { status: string; daysLeft?: number } => {
-  const endDate = startOfDay(parseISO(endDateString));
-  const daysDiff = differenceInDays(endDate, today);
+  try {
+    const endDate = startOfDay(parseISO(endDateString));
+    if (!isValid(endDate)) return { status: "invalid_date" };
 
-  if (isBefore(endDate, today)) {
-    return { status: "expired" };
+    const daysDiff = differenceInDays(endDate, today);
+
+    if (isBefore(endDate, today)) {
+      return { status: "expired" };
+    }
+    if (daysDiff <= 7) {
+      return { status: "expiring-7", daysLeft: daysDiff };
+    }
+    if (daysDiff <= 14) {
+      return { status: "expiring-14", daysLeft: daysDiff };
+    }
+    if (daysDiff <= 30) {
+      return { status: "expiring-30", daysLeft: daysDiff };
+    }
+    return { status: "active" };
+  } catch {
+    return { status: "invalid_date" };
   }
-  if (daysDiff <= 7) {
-    return { status: "expiring-7", daysLeft: daysDiff };
-  }
-  if (daysDiff <= 14) {
-    return { status: "expiring-14", daysLeft: daysDiff };
-  }
-  if (daysDiff <= 30) {
-    return { status: "expiring-30", daysLeft: daysDiff };
-  }
-  return { status: "active" };
 };
 
 const getStatusBadge = (statusInfo: { status: string; daysLeft?: number }) => {
@@ -161,6 +169,8 @@ const getStatusBadge = (statusInfo: { status: string; daysLeft?: number }) => {
           期限切れ
         </Badge>
       );
+    case "invalid_date":
+      return <Badge variant="destructive">無効な日付</Badge>;
     default:
       return <Badge>{statusInfo.status}</Badge>;
   }
@@ -169,18 +179,17 @@ const getStatusBadge = (statusInfo: { status: string; daysLeft?: number }) => {
 const formatDate = (dateString: string) => {
   try {
     const date = parseISO(dateString);
-    return date.toLocaleDateString("ja-JP", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  } catch (e) {
-    return "無効な日付";
+    if (!isValid(date)) return "無効な日付";
+    // Using ja locale for Japanese date format
+    return format(date, "PPP", { locale: ja }); // PPP gives 'yyyy年M月d日'
+  } catch {
+    return "フォーマットエラー";
   }
 };
 // --- End Date & Status Logic ---
 
 export default function Contracts() {
+  const navigate = useNavigate(); // Initialize useNavigate
   const [searchTerm, setSearchTerm] = useState("");
   const [showAddDialog, setShowAddDialog] = useState(false);
   // Add state for new contract form (if needed for controlled inputs)
@@ -203,6 +212,11 @@ export default function Contracts() {
     // ... get other fields
     setShowAddDialog(false); // Close dialog after submission
     // Show success toast
+  };
+
+  // Handle row click navigation
+  const handleRowClick = (contractId: string) => {
+    navigate(`/contracts/detail/${contractId}`);
   };
 
   return (
@@ -348,7 +362,7 @@ export default function Contracts() {
                 <TableHead>終了日</TableHead>
                 <TableHead>ステータス</TableHead>
                 <TableHead>契約金額</TableHead>
-                <TableHead className="w-[50px]"></TableHead>
+                {/* Removed Actions Header */}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -356,9 +370,14 @@ export default function Contracts() {
                 filteredContracts.map((contract) => {
                   const statusInfo = getExpiryStatus(contract.endDate);
                   return (
-                    <TableRow key={contract.id} data-status={statusInfo.status}>
-                      {" "}
-                      {/* Optional: Add data attribute for potential row styling */}
+                    <TableRow
+                      key={contract.id}
+                      data-status={
+                        statusInfo.status
+                      } /* Optional: Add data attribute for potential row styling */
+                      onClick={() => handleRowClick(contract.id)} // Add onClick handler
+                      className="cursor-pointer hover:bg-gray-50" // Add cursor and hover effect
+                    >
                       <TableCell className="font-medium">
                         {contract.id}
                       </TableCell>
@@ -370,34 +389,13 @@ export default function Contracts() {
                       <TableCell>{formatDate(contract.endDate)}</TableCell>
                       <TableCell>{getStatusBadge(statusInfo)}</TableCell>
                       <TableCell>{contract.amount}</TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>アクション</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem>詳細を表示</DropdownMenuItem>
-                            {/* TODO: Link to an edit page/modal */}
-                            <DropdownMenuItem>編集</DropdownMenuItem>
-                            {/* TODO: Implement history view */}
-                            <DropdownMenuItem>更新履歴</DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem className="text-red-600">
-                              契約解除
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
+                      {/* Removed Actions Cell */}
                     </TableRow>
                   );
                 })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={9} className="h-24 text-center">
+                  <TableCell colSpan={8} className="h-24 text-center">
                     {" "}
                     {/* Updated colSpan */}
                     契約が見つかりません。

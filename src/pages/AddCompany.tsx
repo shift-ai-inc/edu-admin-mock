@@ -12,40 +12,29 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { toast } from '@/hooks/use-toast'; // Assuming use-toast is set up
+import { toast } from '@/hooks/use-toast';
 
-// Define the validation schema using Zod
+// Define the validation schema using Zod (updated)
 const companyFormSchema = z.object({
   companyName: z.string().min(1, { message: '企業名を入力してください。' }),
-  industry: z.string().min(1, { message: '業種を選択してください。' }),
-  employeeSize: z.coerce.number().min(1, { message: '従業員規模は1以上である必要があります。' }),
-  contractPlan: z.string().min(1, { message: '契約プランを選択してください。' }),
-  contractStartDate: z.string().min(1, { message: '契約開始日を入力してください。' }), // Consider using a date picker
-  contractEndDate: z.string().min(1, { message: '契約終了日を入力してください。' }), // Consider using a date picker
-  maxUsers: z.coerce.number().min(1, { message: '最大ユーザー数は1以上である必要があります。' }),
-  billingInfo: z.string().optional(),
+  // Removed: industry, employeeSize, contractPlan, contractStartDate, contractEndDate, maxUsers
+  // Added specific billing fields (optional)
+  billingContactName: z.string().optional(),
+  billingContactEmail: z.string().email({ message: '有効なメールアドレスを入力してください。' }).optional().or(z.literal('')), // Allow empty string
+  billingAddress: z.string().optional(),
+  billingNotes: z.string().optional(),
 });
 
 type CompanyFormValues = z.infer<typeof companyFormSchema>;
 
-// Default values for the form
+// Default values for the form (updated)
 const defaultValues: Partial<CompanyFormValues> = {
   companyName: '',
-  industry: '',
-  employeeSize: undefined,
-  contractPlan: '',
-  contractStartDate: '',
-  contractEndDate: '',
-  maxUsers: undefined,
-  billingInfo: '',
+  billingContactName: '',
+  billingContactEmail: '',
+  billingAddress: '',
+  billingNotes: '',
 };
 
 export default function AddCompany() {
@@ -90,143 +79,75 @@ export default function AddCompany() {
             )}
           />
 
-          {/* Industry */}
-          <FormField
-            control={form.control}
-            name="industry"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>業種</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="業種を選択してください" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="IT">IT</SelectItem>
-                    <SelectItem value="商社">商社</SelectItem>
-                    <SelectItem value="建設">建設</SelectItem>
-                    <SelectItem value="環境">環境</SelectItem>
-                    <SelectItem value="メディア">メディア</SelectItem>
-                    <SelectItem value="製造">製造</SelectItem>
-                    <SelectItem value="金融">金融</SelectItem>
-                    <SelectItem value="その他">その他</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {/* Removed: Industry, Employee Size, Contract Plan, Contract Period, Max Users */}
 
-          {/* Employee Size */}
+          {/* Billing Info Section */}
+          <h3 className="text-lg font-medium border-b pb-2 mb-4 pt-4">請求情報</h3>
           <FormField
             control={form.control}
-            name="employeeSize"
+            name="billingContactName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>従業員規模</FormLabel>
+                <FormLabel>請求先 担当者名</FormLabel>
                 <FormControl>
-                  <Input type="number" placeholder="例: 500" {...field} />
+                  <Input placeholder="例: 経理 太郎" {...field} />
                 </FormControl>
+                <FormDescription>（任意）</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
           />
-
-          {/* Contract Plan */}
           <FormField
             control={form.control}
-            name="contractPlan"
+            name="billingContactEmail"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>契約プラン</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="プランを選択してください" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="basic">ベーシック</SelectItem>
-                    <SelectItem value="standard">スタンダード</SelectItem>
-                    <SelectItem value="premium">プレミアム</SelectItem>
-                    <SelectItem value="enterprise">エンタープライズ</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Contract Period */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="contractStartDate"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>契約開始日</FormLabel>
-                  <FormControl>
-                    {/* Consider replacing with a Calendar component */}
-                    <Input type="date" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="contractEndDate"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>契約終了日</FormLabel>
-                  <FormControl>
-                    {/* Consider replacing with a Calendar component */}
-                    <Input type="date" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
-          {/* Max Users */}
-          <FormField
-            control={form.control}
-            name="maxUsers"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>最大ユーザー数</FormLabel>
+                <FormLabel>請求先 メールアドレス</FormLabel>
                 <FormControl>
-                  <Input type="number" placeholder="例: 100" {...field} />
+                  <Input type="email" placeholder="例: keiri@example.com" {...field} />
                 </FormControl>
+                 <FormDescription>（任意）</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
           />
-
-          {/* Billing Info */}
           <FormField
             control={form.control}
-            name="billingInfo"
+            name="billingAddress"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>請求情報</FormLabel>
+                <FormLabel>請求先 住所</FormLabel>
                 <FormControl>
                   <Textarea
-                    placeholder="請求先住所、担当者名、連絡先などを入力してください"
+                    placeholder="例: 〒100-0000 東京都千代田区..."
                     className="resize-none"
                     {...field}
                   />
                 </FormControl>
-                <FormDescription>
-                  （任意）請求に関する特記事項があれば入力してください。
-                </FormDescription>
+                 <FormDescription>（任意）</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
           />
+          <FormField
+            control={form.control}
+            name="billingNotes"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>請求に関する備考</FormLabel>
+                <FormControl>
+                  <Textarea
+                    placeholder="請求書送付に関する特記事項など"
+                    className="resize-none"
+                    {...field}
+                  />
+                </FormControl>
+                <FormDescription>（任意）</FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
 
           <Button type="submit">企業を登録</Button>
         </form>

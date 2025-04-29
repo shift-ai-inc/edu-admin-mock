@@ -1,7 +1,9 @@
-"use client" // Required for TanStack Table v8 hooks
-
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, MoreHorizontal, KeyRound, Trash2, Edit } from "lucide-react";
+import {
+  SystemAdmin,
+  getPermissionLevelName,
+  getStatusName,
+} from "@/types/system-admin";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -11,56 +13,49 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Checkbox } from "@/components/ui/checkbox"; // Assuming checkbox exists
-import { Badge } from "@/components/ui/badge"; // Assuming badge exists
-import { SystemAdmin, getPermissionLevelName, getStatusName } from "@/types/system-admin";
-import { toast } from "@/hooks/use-toast"; // Assuming toast hook exists
-import { format } from 'date-fns'; // For date formatting
+import {
+  ArrowUpDown,
+  MoreHorizontal,
+  Trash2,
+  KeyRound,
+  Pencil,
+} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+// import { Checkbox } from "@/components/ui/checkbox"; // Removed Checkbox import
+import { toast } from "@/hooks/use-toast"; // For placeholder actions
+import { useNavigate } from "react-router-dom"; // Import useNavigate
 
-// --- Placeholder Action Handlers ---
-const handleEdit = (admin: SystemAdmin) => {
-  // TODO: Implement navigation to an edit page or open an edit modal
-  toast({ title: "編集アクション", description: `管理者 ${admin.name} (ID: ${admin.id}) を編集中。 (実装保留)` });
-  console.log("Edit admin:", admin);
+// Placeholder function for issuing temporary password
+const handleIssueTempPassword = (admin: SystemAdmin) => {
+  console.log("Issuing temporary password for:", admin.name, admin.id);
+  // TODO: Implement API call and confirmation dialog
+  toast({
+    title: "一時パスワード発行 (実装保留)",
+    description: `${admin.name} の一時パスワードを発行します。`,
+  });
 };
 
-const handleDelete = (admin: SystemAdmin) => {
-  // TODO: Implement confirmation dialog and API call for deletion
-  toast({ title: "削除アクション", description: `管理者 ${admin.name} (ID: ${admin.id}) を削除中。 (実装保留)`, variant: "destructive" });
-  console.log("Delete admin:", admin);
+// Placeholder function for deleting admin
+const handleDeleteAdmin = (admin: SystemAdmin) => {
+  console.log("Deleting admin:", admin.name, admin.id);
+  // TODO: Implement API call and confirmation dialog
+  toast({
+    title: "管理者削除 (実装保留)",
+    description: `${admin.name} を削除します。`,
+    variant: "destructive",
+  });
 };
 
-const handleIssueTemporaryPassword = (admin: SystemAdmin) => {
-  // TODO: Implement API call to issue temporary password and notify user/admin
-  toast({ title: "仮パスワード発行アクション", description: `管理者 ${admin.name} (ID: ${admin.id}) の仮パスワードを発行中。 (実装保留)` });
-  console.log("Issue temporary password for admin:", admin);
-};
+// Actual function to navigate to the edit page
+// Note: This needs to be called within a component context where useNavigate is available.
+// We'll wrap the logic inside the cell renderer.
+// const handleEditAdmin = (admin: SystemAdmin, navigate: ReturnType<typeof useNavigate>) => {
+//     console.log("Navigating to edit admin:", admin.name, admin.id);
+//     navigate(`/system-admins/edit/${admin.id}`);
+// };
 
-// --- Column Definitions ---
 export const columns: ColumnDef<SystemAdmin>[] = [
-  // Optional: Select Checkbox Column
-  {
-    id: "select",
-    header: ({ table }) => (
-      <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && "indeterminate")
-        }
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-      />
-    ),
-    enableSorting: false,
-    enableHiding: false,
-  },
+  // Removed the checkbox column definition
   {
     accessorKey: "name",
     header: ({ column }) => {
@@ -72,92 +67,98 @@ export const columns: ColumnDef<SystemAdmin>[] = [
           氏名
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
-      )
+      );
     },
-    cell: ({ row }) => <div className="font-medium">{row.getValue("name")}</div>,
   },
   {
     accessorKey: "email",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          メールアドレス
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      )
-    },
+    header: "メールアドレス",
   },
   {
     accessorKey: "permissionLevel",
     header: "権限レベル",
-    cell: ({ row }) => {
-      const level = row.getValue("permissionLevel") as SystemAdmin["permissionLevel"];
-      return getPermissionLevelName(level);
-    },
-    filterFn: (row, id, value) => { // Enable filtering by permission level if needed
-      return value.includes(row.getValue(id))
-    },
+    cell: ({ row }) => getPermissionLevelName(row.original.permissionLevel),
   },
   {
     accessorKey: "status",
     header: "ステータス",
     cell: ({ row }) => {
-      const status = row.getValue("status") as SystemAdmin["status"];
-      const variant = status === 'active' ? 'default' : 'secondary';
-      return <Badge variant={variant}>{getStatusName(status)}</Badge>;
-    },
-     filterFn: (row, id, value) => { // Enable filtering by status if needed
-      return value.includes(row.getValue(id))
+      const status = row.original.status;
+      return (
+        <Badge variant={status === "active" ? "default" : "secondary"}>
+          {getStatusName(status)}
+        </Badge>
+      );
     },
   },
-   {
-    accessorKey: "createdAt",
+  {
+    accessorKey: "lastLogin",
     header: ({ column }) => {
       return (
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          登録日
+          最終ログイン
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
-      )
+      );
     },
     cell: ({ row }) => {
-        const date = row.getValue("createdAt") as Date | null;
-        return date ? format(date, 'yyyy/MM/dd') : '-';
-    }
+      const lastLogin = row.original.lastLogin;
+      return lastLogin ? lastLogin.toLocaleString("ja-JP") : "N/A";
+    },
   },
   {
     id: "actions",
     cell: ({ row }) => {
       const admin = row.original;
+      // eslint-disable-next-line react-hooks/rules-of-hooks
+      const navigate = useNavigate(); // Hook used inside the cell component
+
+      const handleEditClick = (e: React.MouseEvent) => {
+        e.stopPropagation(); // Prevent row click if needed
+        console.log("Navigating to edit admin:", admin.name, admin.id);
+        navigate(`/system-admins/edit/${admin.id}`);
+      };
 
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
+            {/* Stop propagation to prevent row click when opening menu */}
+            <Button
+              variant="ghost"
+              className="h-8 w-8 p-0"
+              onClick={(e) => e.stopPropagation()}
+            >
               <span className="sr-only">Open menu</span>
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>アクション</DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => handleEdit(admin)}>
-              <Edit className="mr-2 h-4 w-4" />
+            <DropdownMenuSeparator />
+            {/* Use the handleEditClick function which includes navigate */}
+            <DropdownMenuItem onClick={handleEditClick}>
+              <Pencil className="mr-2 h-4 w-4" />
               編集
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleIssueTemporaryPassword(admin)}>
-               <KeyRound className="mr-2 h-4 w-4" />
-              仮パスワード発行
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.stopPropagation();
+                handleIssueTempPassword(admin);
+              }}
+            >
+              <KeyRound className="mr-2 h-4 w-4" />
+              一時パスワード発行
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              onClick={() => handleDelete(admin)}
-              className="text-red-600 focus:text-red-600 focus:bg-red-50"
+              className="text-red-600"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDeleteAdmin(admin);
+              }}
             >
               <Trash2 className="mr-2 h-4 w-4" />
               削除
@@ -166,7 +167,5 @@ export const columns: ColumnDef<SystemAdmin>[] = [
         </DropdownMenu>
       );
     },
-    enableSorting: false,
-    enableHiding: false,
   },
 ];

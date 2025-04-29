@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   Card,
   CardContent,
@@ -30,8 +30,10 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
+import { useEffect, useState } from "react";
+import { ArrowLeft } from "lucide-react";
 
-// --- Mock Data (Extend as needed) ---
+// --- Mock Data (Same as AddAssessment, plus find function) ---
 const assessmentCategories = [
   { id: "ability", name: "能力診断" },
   { id: "skill", name: "スキル評価" },
@@ -53,8 +55,79 @@ const targetSkillLevels = [
   { id: "expert", name: "エキスパート" },
 ];
 
-// --- Validation Schema ---
-const addAssessmentFormSchema = z.object({
+// Mock Assessment Type (Simplified for form)
+interface AssessmentFormData {
+  id: string;
+  title: string;
+  description?: string;
+  category: string; // Use category ID
+  difficulty: string; // Use difficulty ID
+  estimatedTime: number;
+  targetSkillLevel: string; // Use skill level ID
+  status: "draft" | "published" | "archived"; // Include archived
+}
+
+// Mock function to find assessment by ID (replace with API call)
+const findAssessmentByIdForEdit = (
+  id: string
+): AssessmentFormData | undefined => {
+  const assessments: AssessmentFormData[] = [
+    {
+      id: "ASS-001",
+      title: "リーダーシップ能力診断",
+      category: "ability",
+      difficulty: "medium",
+      estimatedTime: 60,
+      targetSkillLevel: "intermediate",
+      status: "published",
+      description: "リーダーとしての潜在能力と現在のスキルセットを評価します。",
+    },
+    {
+      id: "ASS-002",
+      title: "エンジニアスキル評価",
+      category: "skill",
+      difficulty: "hard",
+      estimatedTime: 90,
+      targetSkillLevel: "advanced",
+      status: "published",
+      description: "ソフトウェアエンジニア向けの技術スキル評価。",
+    },
+    {
+      id: "ASS-003",
+      title: "組織文化サーベイ",
+      category: "organization",
+      difficulty: "easy",
+      estimatedTime: 30,
+      targetSkillLevel: "beginner",
+      status: "published",
+      description: "組織の文化や従業員のエンゲージメントを測定します。",
+    },
+    {
+      id: "ASS-004",
+      title: "マネジメントスキル診断",
+      category: "ability",
+      difficulty: "medium",
+      estimatedTime: 50,
+      targetSkillLevel: "intermediate",
+      status: "draft",
+      description: "",
+    },
+    {
+      id: "ASS-005",
+      title: "コミュニケーション適性テスト",
+      category: "aptitude",
+      difficulty: "easy",
+      estimatedTime: 25,
+      targetSkillLevel: "beginner",
+      status: "archived",
+      description: "職場におけるコミュニケーションスタイルを評価します。",
+    },
+  ];
+  return assessments.find((assessment) => assessment.id === id);
+};
+
+// --- Validation Schema (Allow 'archived' status) ---
+const editAssessmentFormSchema = z.object({
   title: z.string().min(1, { message: "アセスメント名を入力してください。" }),
   description: z.string().optional(),
   category: z.string().min(1, { message: "カテゴリを選択してください。" }),
@@ -66,71 +139,104 @@ const addAssessmentFormSchema = z.object({
   targetSkillLevel: z
     .string()
     .min(1, { message: "対象スキルレベルを選択してください。" }),
-  status: z.enum(["draft", "published"], {
+  status: z.enum(["draft", "published", "archived"], {
+    // Added 'archived'
     required_error: "ステータスを選択してください。",
   }),
-  // version: z.number().int().positive().default(1), // Add version later if needed
 });
 
-type AddAssessmentFormValues = z.infer<typeof addAssessmentFormSchema>;
-
-// --- Default Values ---
-const defaultValues: Partial<AddAssessmentFormValues> = {
-  title: "",
-  description: "",
-  category: "",
-  difficulty: "",
-  estimatedTime: undefined, // Initialize as undefined for placeholder
-  targetSkillLevel: "",
-  status: "draft", // Default to draft
-};
+type EditAssessmentFormValues = z.infer<typeof editAssessmentFormSchema>;
 
 // --- Component ---
-export default function AddAssessment() {
+export default function EditAssessment() {
   const navigate = useNavigate();
-  const form = useForm<AddAssessmentFormValues>({
-    resolver: zodResolver(addAssessmentFormSchema),
-    defaultValues,
+  const { assessmentId } = useParams<{ assessmentId: string }>();
+  const [assessmentData, setAssessmentData] =
+    useState<AssessmentFormData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const form = useForm<EditAssessmentFormValues>({
+    resolver: zodResolver(editAssessmentFormSchema),
     mode: "onChange",
+    // Default values will be set by useEffect
   });
 
-  function onSubmit(data: AddAssessmentFormValues) {
-    // TODO: Implement API call to save the new assessment data
-    // For now, just log and show a toast
-    const assessmentData = {
-      ...data,
-      version: 1, // Add version number manually for now
-      createdAt: new Date().toISOString().split("T")[0], // Add creation date
-      questions: 0, // Initial question count
-      companies: 0, // Initial company usage count
-    };
-    console.log(assessmentData);
+  useEffect(() => {
+    if (assessmentId) {
+      setIsLoading(true);
+      // Simulate API call
+      const data = findAssessmentByIdForEdit(assessmentId);
+      if (data) {
+        setAssessmentData(data);
+        // Set form values after data is fetched
+        form.reset({
+          title: data.title,
+          description: data.description || "",
+          category: data.category,
+          difficulty: data.difficulty,
+          estimatedTime: data.estimatedTime,
+          targetSkillLevel: data.targetSkillLevel,
+          status: data.status,
+        });
+      } else {
+        // Handle assessment not found
+        toast({
+          title: "エラー",
+          description: "アセスメントが見つかりませんでした。",
+          variant: "destructive",
+        });
+        navigate("/assessments");
+      }
+      setIsLoading(false);
+    } else {
+      navigate("/assessments"); // Redirect if no ID
+    }
+  }, [assessmentId, navigate, form]);
+
+  function onSubmit(data: EditAssessmentFormValues) {
+    if (!assessmentId) return;
+    // TODO: Implement API call to update the assessment data
+    console.log("Updating assessment:", assessmentId, data);
     toast({
-      title: "アセスメント情報が送信されました:",
+      title: "アセスメント情報が更新されました:",
       description: (
         <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
           <code className="text-white">
-            {JSON.stringify(assessmentData, null, 2)}
+            {JSON.stringify({ id: assessmentId, ...data }, null, 2)}
           </code>
         </pre>
       ),
     });
-    // TODO: Navigate to the assessment detail/edit page after creation
-    // navigate(`/assessments/edit/${newAssessmentId}`); // Example
-    // For now, navigate back to the list
-    navigate("/assessments");
+    // Navigate back to the detail page or list page after update
+    navigate(`/assessments/detail/${assessmentId}`);
+  }
+
+  if (isLoading) {
+    return <div className="p-8">読み込み中...</div>; // Or a spinner component
+  }
+
+  if (!assessmentData) {
+    // This case should ideally be handled by the useEffect redirect, but added for safety
+    return <div className="p-8">アセスメントが見つかりません。</div>;
   }
 
   return (
     <div className="p-8">
+      <Button
+        onClick={() => navigate(`/assessments/detail/${assessmentId}`)}
+        variant="outline"
+        className="mb-6"
+      >
+        <ArrowLeft className="mr-2 h-4 w-4" /> 詳細に戻る
+      </Button>
       <h1 className="text-2xl font-semibold text-gray-900 mb-6">
-        新規アセスメント作成
+        アセスメント編集: {assessmentData.title} ({assessmentData.id})
       </h1>
       <Card>
         <CardHeader>
-          <CardTitle>アセスメント情報</CardTitle>
+          <CardTitle>アセスメント基本情報</CardTitle>
           <CardDescription>
-            新しいアセスメントの基本情報を設定します。設問は後で追加・編集できます。
+            アセスメントの基本情報を編集します。設問の編集は詳細画面のバージョン管理から行います。
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -183,7 +289,7 @@ export default function AddAssessment() {
                       <FormLabel>カテゴリ</FormLabel>
                       <Select
                         onValueChange={field.onChange}
-                        defaultValue={field.value}
+                        value={field.value}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -212,7 +318,7 @@ export default function AddAssessment() {
                       <FormLabel>難易度</FormLabel>
                       <Select
                         onValueChange={field.onChange}
-                        defaultValue={field.value}
+                        value={field.value}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -261,7 +367,7 @@ export default function AddAssessment() {
                       <FormLabel>対象スキルレベル</FormLabel>
                       <Select
                         onValueChange={field.onChange}
-                        defaultValue={field.value}
+                        value={field.value}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -292,7 +398,7 @@ export default function AddAssessment() {
                     <FormControl>
                       <RadioGroup
                         onValueChange={field.onChange}
-                        defaultValue={field.value}
+                        value={field.value} // Use value here for controlled component
                         className="flex items-center space-x-4"
                       >
                         <FormItem className="flex items-center space-x-2 space-y-0">
@@ -307,10 +413,18 @@ export default function AddAssessment() {
                           </FormControl>
                           <FormLabel className="font-normal">公開</FormLabel>
                         </FormItem>
+                        <FormItem className="flex items-center space-x-2 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value="archived" />
+                          </FormControl>
+                          <FormLabel className="font-normal">
+                            アーカイブ
+                          </FormLabel>
+                        </FormItem>
                       </RadioGroup>
                     </FormControl>
                     <FormDescription>
-                      「下書き」は管理者のみ閲覧可能。「公開」すると企業に提供可能になります。
+                      アセスメント全体のステータスを設定します。
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -321,12 +435,15 @@ export default function AddAssessment() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => navigate("/assessments")}
+                  onClick={() =>
+                    navigate(`/assessments/detail/${assessmentId}`)
+                  }
                 >
                   キャンセル
                 </Button>
-                <Button type="submit">アセスメントを作成</Button>
-                {/* Add "Save and Add Questions" button later */}
+                <Button type="submit" disabled={form.formState.isSubmitting}>
+                  {form.formState.isSubmitting ? "保存中..." : "変更を保存"}
+                </Button>
               </div>
             </form>
           </Form>
