@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom"; // Link removed as it's no longer used for navigation here
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -25,11 +25,20 @@ import {
   PaginationPrevious,
   PaginationEllipsis,
 } from "@/components/ui/pagination";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"; // Import Dialog components
+import { AddCompanyForm } from "@/components/forms/AddCompanyForm"; // Import the new form component
 import { Search, PlusCircle, ArrowUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
-// Removed date-fns imports as contract dates are removed
+import { toast } from "@/hooks/use-toast"; // Import toast for potential parent-level notifications
 
-// --- Mock Data ---
 // Simplified mock data - removed plan, startDate, endDate, users, maxUsers
 const mockCompanies = [
   { id: 1, name: "株式会社テクノロジー", adminCount: 5, status: "アクティブ" },
@@ -61,8 +70,6 @@ const mockCompanies = [
   },
 ];
 
-// Updated Company type
-// Updated SortKey type - removed plan, startDate, endDate, users
 type SortKey = "name" | "adminCount" | "status" | null;
 type SortDirection = "asc" | "desc";
 
@@ -74,18 +81,15 @@ export default function Companies() {
   const [sortKey, setSortKey] = useState<SortKey>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  // Removed planFilter state
-  const [currentPage, setCurrentPage] = useState(1); // Moved state declaration here (FIXED)
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isAddCompanyModalOpen, setIsAddCompanyModalOpen] = useState(false); // State for modal
 
   // --- Filtering and Sorting Logic ---
   const filteredAndSortedCompanies = useMemo(() => {
     const filtered = mockCompanies.filter((company) => {
-      // Status Filter
       if (statusFilter !== "all" && company.status !== statusFilter) {
         return false;
       }
-      // Removed Plan Filter
-      // Search Term Filter (case-insensitive) - removed plan from search
       if (searchTerm) {
         const lowerSearchTerm = searchTerm.toLowerCase();
         return (
@@ -96,7 +100,6 @@ export default function Companies() {
       return true;
     });
 
-    // Sorting - removed plan, startDate, endDate, users cases
     if (sortKey) {
       filtered.sort((a, b) => {
         const aValue = a[sortKey];
@@ -110,13 +113,12 @@ export default function Companies() {
             ? aValue.localeCompare(bValue)
             : bValue.localeCompare(aValue);
         }
-        // Removed date sorting
         return 0;
       });
     }
 
     return filtered;
-  }, [searchTerm, sortKey, sortDirection, statusFilter]); // Removed planFilter dependency
+  }, [searchTerm, sortKey, sortDirection, statusFilter]);
 
   // --- Pagination Logic ---
   const totalPages = Math.ceil(
@@ -126,11 +128,9 @@ export default function Companies() {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
     const endIndex = startIndex + ITEMS_PER_PAGE;
     return filteredAndSortedCompanies.slice(startIndex, endIndex);
-  }, [filteredAndSortedCompanies, currentPage]); // Now currentPage is declared before this
+  }, [filteredAndSortedCompanies, currentPage]);
 
   // --- Handlers ---
-  // currentPage state is now declared above
-
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
       setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
@@ -151,8 +151,6 @@ export default function Companies() {
     setCurrentPage(1);
   };
 
-  // Removed handlePlanFilterChange
-
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
@@ -161,6 +159,17 @@ export default function Companies() {
 
   const handleRowClick = (companyId: number) => {
     navigate(`/companies/update/${companyId}`);
+  };
+
+  const handleAddCompanySuccess = () => {
+    setIsAddCompanyModalOpen(false);
+    // TODO: Implement logic to refresh the company list from the backend
+    // For now, mockCompanies is static, so a visual refresh isn't automatic.
+    // You might re-fetch data or update local state if managing data client-side.
+    toast({
+      title: "企業が正常に追加されました。",
+      description: "企業リストが更新されました（モック）。", // Placeholder
+    });
   };
 
   // --- Helper Functions ---
@@ -177,218 +186,223 @@ export default function Companies() {
     }
   };
 
-  // Removed isNearExpiry and formatDate functions
-
   // --- Render ---
   return (
-    <div className="p-4 md:p-8 space-y-6">
-      {/* Header and Controls */}
-      <div>
-        <h2 className="text-2xl font-semibold text-gray-900 mb-4">企業一覧</h2>
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
-          {/* Search and Filters */}
-          <div className="flex flex-wrap gap-2 items-center w-full md:w-auto">
-            <div className="relative flex-grow md:flex-grow-0">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-              <Input
-                placeholder="企業名などで検索..."
-                value={searchTerm}
-                onChange={handleSearchChange}
-                className="pl-9 w-full md:w-[250px] lg:w-[300px]"
-              />
+    <div className="p-4 md:p-8">
+      <Card>
+        <CardHeader>
+          <CardTitle>企業一覧</CardTitle>
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mt-4">
+            {/* Search and Filters */}
+            <div className="flex flex-wrap gap-2 items-center w-full md:w-auto">
+              <div className="relative flex-grow md:flex-grow-0">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+                <Input
+                  placeholder="企業名などで検索..."
+                  value={searchTerm}
+                  onChange={handleSearchChange}
+                  className="pl-9 w-full md:w-[250px] lg:w-[300px]"
+                />
+              </div>
+              <Select
+                value={statusFilter}
+                onValueChange={handleStatusFilterChange}
+              >
+                <SelectTrigger className="w-full md:w-[150px]">
+                  <SelectValue placeholder="ステータス" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">全ステータス</SelectItem>
+                  <SelectItem value="アクティブ">アクティブ</SelectItem>
+                  <SelectItem value="休止中">休止中</SelectItem>
+                  <SelectItem value="審査中">審査中</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <Select
-              value={statusFilter}
-              onValueChange={handleStatusFilterChange}
-            >
-              <SelectTrigger className="w-full md:w-[150px]">
-                <SelectValue placeholder="ステータス" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">全ステータス</SelectItem>
-                <SelectItem value="アクティブ">アクティブ</SelectItem>
-                <SelectItem value="休止中">休止中</SelectItem>
-                <SelectItem value="審査中">審査中</SelectItem>
-              </SelectContent>
-            </Select>
-            {/* Removed Plan Filter Select */}
+            {/* Add Company Button with Modal */}
+            <Dialog open={isAddCompanyModalOpen} onOpenChange={setIsAddCompanyModalOpen}>
+              <DialogTrigger asChild>
+                <Button className="w-full md:w-auto shrink-0">
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  新規企業を追加
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-2xl"> {/* Adjusted max-width for better form layout */}
+                <DialogHeader>
+                  <DialogTitle>新規企業アカウント作成</DialogTitle>
+                </DialogHeader>
+                <div className="pt-4">
+                  <AddCompanyForm onSuccess={handleAddCompanySuccess} />
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
-          {/* Add Company Button */}
-          <Link to="/companies/add" className={cn("w-full md:w-auto")}>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            新規企業を追加
-          </Link>
-        </div>
-      </div>
-
-      {/* Table */}
-      <div className="bg-white shadow rounded-lg overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              {/* Updated headers - removed plan, dates, users */}
-              <TableHead
-                className="cursor-pointer hover:bg-gray-50"
-                onClick={() => handleSort("name")}
-              >
-                企業名{" "}
-                <ArrowUpDown
-                  className={`inline-block ml-1 h-3 w-3 ${
-                    sortKey === "name" ? "text-gray-900" : "text-gray-400"
-                  }`}
-                />
-              </TableHead>
-              <TableHead
-                className="cursor-pointer hover:bg-gray-50 text-right"
-                onClick={() => handleSort("adminCount")}
-              >
-                管理者数{" "}
-                <ArrowUpDown
-                  className={`inline-block ml-1 h-3 w-3 ${
-                    sortKey === "adminCount" ? "text-gray-900" : "text-gray-400"
-                  }`}
-                />
-              </TableHead>
-              <TableHead
-                className="cursor-pointer hover:bg-gray-50"
-                onClick={() => handleSort("status")}
-              >
-                ステータス{" "}
-                <ArrowUpDown
-                  className={`inline-block ml-1 h-3 w-3 ${
-                    sortKey === "status" ? "text-gray-900" : "text-gray-400"
-                  }`}
-                />
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {paginatedCompanies.length > 0 ? (
-              paginatedCompanies.map((company) => (
-                <TableRow
-                  key={company.id}
-                  onClick={() => handleRowClick(company.id)}
-                  className={cn(
-                    "cursor-pointer",
-                    // Removed expiry highlighting
-                    "hover:bg-gray-50"
-                  )}
-                >
-                  {/* Updated cells - removed plan, dates, users */}
-                  <TableCell className="font-medium">{company.name}</TableCell>
-                  <TableCell className="text-right">
-                    {company.adminCount.toLocaleString()}
-                  </TableCell>
-                  <TableCell>
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadgeClass(
-                        company.status
-                      )}`}
-                    >
-                      {company.status}
-                    </span>
-                  </TableCell>
+        </CardHeader>
+        <CardContent>
+          {/* Table */}
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead
+                    className="cursor-pointer hover:bg-gray-50"
+                    onClick={() => handleSort("name")}
+                  >
+                    企業名{" "}
+                    <ArrowUpDown
+                      className={`inline-block ml-1 h-3 w-3 ${
+                        sortKey === "name" ? "text-gray-900" : "text-gray-400"
+                      }`}
+                    />
+                  </TableHead>
+                  <TableHead
+                    className="cursor-pointer hover:bg-gray-50 text-right"
+                    onClick={() => handleSort("adminCount")}
+                  >
+                    管理者数{" "}
+                    <ArrowUpDown
+                      className={`inline-block ml-1 h-3 w-3 ${
+                        sortKey === "adminCount" ? "text-gray-900" : "text-gray-400"
+                      }`}
+                    />
+                  </TableHead>
+                  <TableHead
+                    className="cursor-pointer hover:bg-gray-50"
+                    onClick={() => handleSort("status")}
+                  >
+                    ステータス{" "}
+                    <ArrowUpDown
+                      className={`inline-block ml-1 h-3 w-3 ${
+                        sortKey === "status" ? "text-gray-900" : "text-gray-400"
+                      }`}
+                    />
+                  </TableHead>
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                {/* Adjusted colSpan */}
-                <TableCell
-                  colSpan={3}
-                  className="h-24 text-center text-gray-500"
-                >
-                  該当する企業が見つかりません。
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
+              </TableHeader>
+              <TableBody>
+                {paginatedCompanies.length > 0 ? (
+                  paginatedCompanies.map((company) => (
+                    <TableRow
+                      key={company.id}
+                      onClick={() => handleRowClick(company.id)}
+                      className={cn(
+                        "cursor-pointer",
+                        "hover:bg-gray-50"
+                      )}
+                    >
+                      <TableCell className="font-medium">{company.name}</TableCell>
+                      <TableCell className="text-right">
+                        {company.adminCount.toLocaleString()}
+                      </TableCell>
+                      <TableCell>
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadgeClass(
+                            company.status
+                          )}`}
+                        >
+                          {company.status}
+                        </span>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell
+                      colSpan={3}
+                      className="h-24 text-center text-gray-500"
+                    >
+                      該当する企業が見つかりません。
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
 
-      {/* Pagination Controls */}
-      {totalPages > 1 && (
-        <div className="mt-4 flex justify-center">
-          <Pagination>
-            <PaginationContent>
-              <PaginationItem>
-                <PaginationPrevious
-                  href="#"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handlePageChange(currentPage - 1);
-                  }}
-                  className={cn(
-                    currentPage === 1 ? "pointer-events-none opacity-50" : ""
-                  )}
-                />
-              </PaginationItem>
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="mt-6 flex justify-center">
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handlePageChange(currentPage - 1);
+                      }}
+                      className={cn(
+                        currentPage === 1 ? "pointer-events-none opacity-50" : ""
+                      )}
+                    />
+                  </PaginationItem>
 
-              {[...Array(totalPages)].map((_, i) => {
-                const page = i + 1;
-                const showPage =
-                  page === 1 ||
-                  page === totalPages ||
-                  Math.abs(page - currentPage) <= 1;
-                const showEllipsis =
-                  Math.abs(page - currentPage) === 2 && totalPages > 5;
+                  {[...Array(totalPages)].map((_, i) => {
+                    const page = i + 1;
+                    const showPage =
+                      page === 1 ||
+                      page === totalPages ||
+                      Math.abs(page - currentPage) <= 1;
+                    const showEllipsis =
+                      Math.abs(page - currentPage) === 2 && totalPages > 5;
 
-                if (showEllipsis) {
-                  // Ensure unique keys for ellipsis and prevent duplicates visually
-                  const key =
-                    page < currentPage
-                      ? `ellipsis-start-${page}`
-                      : `ellipsis-end-${page}`;
-                  // Check if an ellipsis for this position range is already rendered (simple check)
-                  const existingEllipsis = document.querySelector(
-                    `[data-ellipsis-key="${key}"]`
-                  );
-                  if (!existingEllipsis) {
-                    return (
-                      <PaginationItem key={key} data-ellipsis-key={key}>
-                        <PaginationEllipsis />
-                      </PaginationItem>
-                    );
-                  }
-                  return null;
-                }
+                    if (showEllipsis) {
+                      const key =
+                        page < currentPage
+                          ? `ellipsis-start-${page}`
+                          : `ellipsis-end-${page}`;
+                      const existingEllipsis = document.querySelector(
+                        `[data-ellipsis-key="${key}"]`
+                      );
+                      if (!existingEllipsis) {
+                        return (
+                          <PaginationItem key={key} data-ellipsis-key={key}>
+                            <PaginationEllipsis />
+                          </PaginationItem>
+                        );
+                      }
+                      return null;
+                    }
 
-                if (showPage) {
-                  return (
-                    <PaginationItem key={page}>
-                      <PaginationLink
-                        href="#"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          handlePageChange(page);
-                        }}
-                        isActive={currentPage === page}
-                      >
-                        {page}
-                      </PaginationLink>
-                    </PaginationItem>
-                  );
-                }
-                return null;
-              })}
+                    if (showPage) {
+                      return (
+                        <PaginationItem key={page}>
+                          <PaginationLink
+                            href="#"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              handlePageChange(page);
+                            }}
+                            isActive={currentPage === page}
+                          >
+                            {page}
+                          </PaginationLink>
+                        </PaginationItem>
+                      );
+                    }
+                    return null;
+                  })}
 
-              <PaginationItem>
-                <PaginationNext
-                  href="#"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handlePageChange(currentPage + 1);
-                  }}
-                  className={cn(
-                    currentPage === totalPages
-                      ? "pointer-events-none opacity-50"
-                      : ""
-                  )}
-                />
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
-        </div>
-      )}
+                  <PaginationItem>
+                    <PaginationNext
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handlePageChange(currentPage + 1);
+                      }}
+                      className={cn(
+                        currentPage === totalPages
+                          ? "pointer-events-none opacity-50"
+                          : ""
+                      )}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

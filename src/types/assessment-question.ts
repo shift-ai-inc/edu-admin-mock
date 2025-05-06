@@ -11,6 +11,8 @@ export interface AssessmentQuestion {
   options?: { id: string; text: string }[]; // Possible answers for choice questions
   correctAnswer?: string | string[]; // ID(s) of the correct option(s) or correct text answer
   points: number; // Points awarded for a correct answer
+  category?: string; // Optional: e.g., "リーダーシップ", "技術知識"
+  difficulty?: 'easy' | 'medium' | 'hard'; // Optional: Difficulty level
   createdAt: string; // ISO date string
   updatedAt: string; // ISO date string
 }
@@ -24,4 +26,6 @@ export interface AssessmentQuestionFormData {
   options: { text: string }[]; // Simplified for form handling, IDs generated on save
   correctAnswer?: string | string[]; // Index(es) of correct option or text answer
   points: number;
+  category?: string;
+  difficulty?: 'easy' | 'medium' | 'hard';
 }

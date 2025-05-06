@@ -9,6 +9,12 @@ export const mockSystemAdmins: SystemAdmin[] = [
     status: 'active',
     lastLogin: new Date('2024-07-25T10:00:00Z'),
     createdAt: new Date('2023-01-15T09:00:00Z'),
+    detailedPermissions: [
+      "manage_system_admins", "manage_companies", "manage_company_admins",
+      "manage_contracts", "manage_assessments", "manage_surveys",
+      "view_reports", "manage_settings"
+    ],
+    lastPasswordIssuedAt: null,
   },
   {
     id: 'sa-002',
@@ -18,6 +24,11 @@ export const mockSystemAdmins: SystemAdmin[] = [
     status: 'active',
     lastLogin: new Date('2024-07-24T15:30:00Z'),
     createdAt: new Date('2023-03-10T11:00:00Z'),
+    detailedPermissions: [
+      "manage_companies", "manage_company_admins", "manage_contracts",
+      "manage_assessments", "manage_surveys", "view_reports"
+    ],
+    lastPasswordIssuedAt: null,
   },
   {
     id: 'sa-003',
@@ -27,6 +38,8 @@ export const mockSystemAdmins: SystemAdmin[] = [
     status: 'active',
     lastLogin: new Date('2024-07-20T08:45:00Z'),
     createdAt: new Date('2023-05-20T14:00:00Z'),
+    detailedPermissions: ["view_reports"],
+    lastPasswordIssuedAt: null,
   },
   {
     id: 'sa-004',
@@ -36,6 +49,8 @@ export const mockSystemAdmins: SystemAdmin[] = [
     status: 'inactive',
     lastLogin: new Date('2024-05-01T12:00:00Z'),
     createdAt: new Date('2023-02-01T16:00:00Z'),
+    detailedPermissions: ["manage_companies", "view_reports"],
+    lastPasswordIssuedAt: new Date('2024-06-01T10:00:00Z'),
   },
    {
     id: 'sa-005',
@@ -45,5 +60,7 @@ export const mockSystemAdmins: SystemAdmin[] = [
     status: 'active',
     lastLogin: null, // Never logged in
     createdAt: new Date('2024-07-01T10:00:00Z'),
+    detailedPermissions: ["manage_assessments", "manage_surveys"],
+    lastPasswordIssuedAt: null,
   },
 ];

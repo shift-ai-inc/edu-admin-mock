@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom"; // Import useNavigate
+import { useNavigate } from "react-router-dom";
 import {
   ColumnDef,
   flexRender,
@@ -10,7 +10,7 @@ import {
   SortingState,
   ColumnFiltersState,
   useReactTable,
-  Row, // Import Row
+  Row,
 } from "@tanstack/react-table";
 import {
   Table,
@@ -22,15 +22,6 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-// Removed DropdownMenu imports as they are no longer needed for actions
-// import {
-//   DropdownMenu,
-//   DropdownMenuContent,
-//   DropdownMenuItem,
-//   DropdownMenuLabel,
-//   DropdownMenuSeparator,
-//   DropdownMenuTrigger,
-// } from '@/components/ui/dropdown-menu';
 import {
   Select,
   SelectContent,
@@ -40,22 +31,33 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
   ArrowUpDown,
-  // MoreHorizontal, // Removed as action trigger is gone
   Search,
-  // UserCheck, // Removed action icons
-  // UserX,
-  // KeyRound,
-  // Edit,
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
-  PlusCircle, // Icon for Add button
+  PlusCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format, parseISO, isValid } from "date-fns";
 import { ja } from "date-fns/locale";
+import { AddCompanyAdminForm } from "@/components/forms/AddCompanyAdminForm"; // Import the new form
+import { toast } from "@/hooks/use-toast"; // For success toast on modal close
 
 // --- Mock Data ---
 const mockCompanies = [
@@ -174,7 +176,6 @@ const getStatusBadgeClass = (status: string) => {
 };
 
 // --- Column Definitions ---
-// Removed the actions column definition
 const columns: ColumnDef<Admin>[] = [
   {
     accessorKey: "companyName",
@@ -262,20 +263,15 @@ const columns: ColumnDef<Admin>[] = [
       return value === "all" || row.getValue(id) === value;
     },
   },
-  // { // --- REMOVED ACTIONS COLUMN ---
-  //   id: "actions",
-  //   cell: ({ row }) => {
-  //     // ... action menu logic was here ...
-  //   },
-  // },
 ];
 
 // --- Component ---
 export default function CompanyAdmins() {
-  const navigate = useNavigate(); // Initialize navigate
+  const navigate = useNavigate();
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = useState("");
+  const [isAddAdminModalOpen, setIsAddAdminModalOpen] = useState(false);
 
   const data = useMemo(() => mockAdmins, []);
 
@@ -313,202 +309,232 @@ export default function CompanyAdmins() {
       ?.setFilterValue(value === "all" ? undefined : value);
   };
 
-  // Row click handler
   const handleRowClick = (row: Row<Admin>) => {
-    // Navigate to a hypothetical detail page route
     navigate(`/company-admins/detail/${row.original.id}`);
   };
 
+  const handleAdminAdded = () => {
+    setIsAddAdminModalOpen(false);
+    // TODO: Implement data refresh logic if needed
+    // For now, we can show a success toast here as well, or rely on the form's toast
+    toast({
+      title: "成功",
+      description: "新しい管理者が正常に追加されました。",
+    });
+    // Example: refetch data or update local state
+    // setData(prevData => [...prevData, newAdminDataFromForm]); // This would require newAdminDataFromForm
+  };
+
+
   return (
-    <div className="p-4 md:p-8 space-y-6">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-semibold text-gray-900">企業管理者一覧</h2>
-        {/* Add Admin Button */}
-        <Button onClick={() => navigate("/company-admins/add")}>
-          <PlusCircle className="mr-2 h-4 w-4" /> 新規管理者を追加
-        </Button>
-      </div>
-
-      {/* Filters and Search */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
-        <div className="flex flex-wrap gap-2 items-center w-full md:w-auto">
-          <div className="relative flex-grow md:flex-grow-0">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-            <Input
-              placeholder="名前、メール等で検索..."
-              value={globalFilter ?? ""}
-              onChange={(event) => setGlobalFilter(event.target.value)}
-              className="pl-9 w-full md:w-[250px] lg:w-[300px]"
-            />
+    <div className="p-4 md:p-8">
+      <Card>
+        <CardHeader>
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
+            <CardTitle>企業管理者一覧</CardTitle>
+            <Dialog open={isAddAdminModalOpen} onOpenChange={setIsAddAdminModalOpen}>
+              <DialogTrigger asChild>
+                <Button className="mt-2 md:mt-0 w-full md:w-auto shrink-0">
+                  <PlusCircle className="mr-2 h-4 w-4" /> 新規管理者を追加
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[600px]">
+                <DialogHeader>
+                  <DialogTitle>新規企業管理者登録</DialogTitle>
+                  <DialogDescription>
+                    新しい企業管理者の情報を入力し、登録してください。
+                  </DialogDescription>
+                </DialogHeader>
+                <AddCompanyAdminForm
+                  onFormSubmit={handleAdminAdded}
+                  onCancel={() => setIsAddAdminModalOpen(false)}
+                />
+              </DialogContent>
+            </Dialog>
           </div>
-          <Select
-            value={
-              (table.getColumn("companyName")?.getFilterValue() as string) ??
-              "all"
-            }
-            onValueChange={handleCompanyFilterChange}
-          >
-            <SelectTrigger className="w-full md:w-[200px]">
-              <SelectValue placeholder="企業で絞り込み" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">全ての企業</SelectItem>
-              {mockCompanies.map((company) => (
-                <SelectItem key={company.id} value={company.name}>
-                  {company.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select
-            value={
-              (table.getColumn("status")?.getFilterValue() as string) ?? "all"
-            }
-            onValueChange={handleStatusFilterChange}
-          >
-            <SelectTrigger className="w-full md:w-[150px]">
-              <SelectValue placeholder="ステータス" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">全ステータス</SelectItem>
-              <SelectItem value="アクティブ">アクティブ</SelectItem>
-              <SelectItem value="非アクティブ">非アクティブ</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
 
-      {/* Data Table */}
-      <div className="rounded-md border bg-white shadow">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id} className="whitespace-nowrap">
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                  onClick={() => handleRowClick(row)} // Add onClick handler
-                  className="cursor-pointer hover:bg-muted/50" // Add cursor and hover effect
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
+          {/* Filters and Search */}
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div className="flex flex-wrap gap-2 items-center w-full md:w-auto">
+              <div className="relative flex-grow md:flex-grow-0">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+                <Input
+                  placeholder="名前、メール等で検索..."
+                  value={globalFilter ?? ""}
+                  onChange={(event) => setGlobalFilter(event.target.value)}
+                  className="pl-9 w-full md:w-[250px] lg:w-[300px]"
+                />
+              </div>
+              <Select
+                value={
+                  (table.getColumn("companyName")?.getFilterValue() as string) ??
+                  "all"
+                }
+                onValueChange={handleCompanyFilterChange}
+              >
+                <SelectTrigger className="w-full md:w-[200px]">
+                  <SelectValue placeholder="企業で絞り込み" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">全ての企業</SelectItem>
+                  {mockCompanies.map((company) => (
+                    <SelectItem key={company.id} value={company.name}>
+                      {company.name}
+                    </SelectItem>
                   ))}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  // Adjust colSpan since actions column is removed
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                  該当する管理者が見つかりません。
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
+                </SelectContent>
+              </Select>
+              <Select
+                value={
+                  (table.getColumn("status")?.getFilterValue() as string) ?? "all"
+                }
+                onValueChange={handleStatusFilterChange}
+              >
+                <SelectTrigger className="w-full md:w-[150px]">
+                  <SelectValue placeholder="ステータス" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">全ステータス</SelectItem>
+                  <SelectItem value="アクティブ">アクティブ</SelectItem>
+                  <SelectItem value="非アクティブ">非アクティブ</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {/* Data Table */}
+          <div className="rounded-md border bg-white shadow-sm">
+            <Table>
+              <TableHeader>
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <TableRow key={headerGroup.id}>
+                    {headerGroup.headers.map((header) => (
+                      <TableHead key={header.id} className="whitespace-nowrap">
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(
+                              header.column.columnDef.header,
+                              header.getContext()
+                            )}
+                      </TableHead>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableHeader>
+              <TableBody>
+                {table.getRowModel().rows?.length ? (
+                  table.getRowModel().rows.map((row) => (
+                    <TableRow
+                      key={row.id}
+                      data-state={row.getIsSelected() && "selected"}
+                      onClick={() => handleRowClick(row)}
+                      className="cursor-pointer hover:bg-muted/50"
+                    >
+                      {row.getVisibleCells().map((cell) => (
+                        <TableCell key={cell.id}>
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          )}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell
+                      colSpan={columns.length}
+                      className="h-24 text-center"
+                    >
+                      該当する管理者が見つかりません。
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
 
-      {/* Pagination */}
-      <div className="flex items-center justify-between space-x-2 py-4">
-        <div className="flex-1 text-sm text-muted-foreground">
-          全 {table.getFilteredRowModel().rows.length} 件中{" "}
-          {table.getState().pagination.pageIndex *
-            table.getState().pagination.pageSize +
-            1}{" "}
-          -{" "}
-          {Math.min(
-            (table.getState().pagination.pageIndex + 1) *
-              table.getState().pagination.pageSize,
-            table.getFilteredRowModel().rows.length
-          )}{" "}
-          件を表示
-        </div>
-        <div className="flex items-center space-x-2">
-          <span className="text-sm mr-2">表示件数:</span>
-          <Select
-            value={`${table.getState().pagination.pageSize}`}
-            onValueChange={(value) => {
-              table.setPageSize(Number(value));
-            }}
-          >
-            <SelectTrigger className="h-8 w-[70px]">
-              <SelectValue placeholder={table.getState().pagination.pageSize} />
-            </SelectTrigger>
-            <SelectContent side="top">
-              {[5, 10, 20, 30, 50].map((pageSize) => (
-                <SelectItem key={pageSize} value={`${pageSize}`}>
-                  {pageSize}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="flex items-center space-x-1">
-          <Button
-            variant="outline"
-            className="h-8 w-8 p-0"
-            onClick={() => table.setPageIndex(0)}
-            disabled={!table.getCanPreviousPage()}
-          >
-            <span className="sr-only">最初のページ</span>
-            <ChevronsLeft className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="outline"
-            className="h-8 w-8 p-0"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            <span className="sr-only">前のページ</span>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <span className="text-sm mx-2">
-            ページ {table.getState().pagination.pageIndex + 1} /{" "}
-            {table.getPageCount()}
-          </span>
-          <Button
-            variant="outline"
-            className="h-8 w-8 p-0"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            <span className="sr-only">次のページ</span>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="outline"
-            className="h-8 w-8 p-0"
-            onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-            disabled={!table.getCanNextPage()}
-          >
-            <span className="sr-only">最後のページ</span>
-            <ChevronsRight className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
+          {/* Pagination */}
+          <div className="flex items-center justify-between space-x-2 py-4">
+            <div className="flex-1 text-sm text-muted-foreground">
+              全 {table.getFilteredRowModel().rows.length} 件中{" "}
+              {table.getState().pagination.pageIndex *
+                table.getState().pagination.pageSize +
+                1}{" "}
+              -{" "}
+              {Math.min(
+                (table.getState().pagination.pageIndex + 1) *
+                  table.getState().pagination.pageSize,
+                table.getFilteredRowModel().rows.length
+              )}{" "}
+              件を表示
+            </div>
+            <div className="flex items-center space-x-2">
+              <span className="text-sm mr-2">表示件数:</span>
+              <Select
+                value={`${table.getState().pagination.pageSize}`}
+                onValueChange={(value) => {
+                  table.setPageSize(Number(value));
+                }}
+              >
+                <SelectTrigger className="h-8 w-[70px]">
+                  <SelectValue placeholder={table.getState().pagination.pageSize} />
+                </SelectTrigger>
+                <SelectContent side="top">
+                  {[5, 10, 20, 30, 50].map((pageSize) => (
+                    <SelectItem key={pageSize} value={`${pageSize}`}>
+                      {pageSize}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center space-x-1">
+              <Button
+                variant="outline"
+                className="h-8 w-8 p-0"
+                onClick={() => table.setPageIndex(0)}
+                disabled={!table.getCanPreviousPage()}
+              >
+                <span className="sr-only">最初のページ</span>
+                <ChevronsLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                className="h-8 w-8 p-0"
+                onClick={() => table.previousPage()}
+                disabled={!table.getCanPreviousPage()}
+              >
+                <span className="sr-only">前のページ</span>
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="text-sm mx-2">
+                ページ {table.getState().pagination.pageIndex + 1} /{" "}
+                {table.getPageCount()}
+              </span>
+              <Button
+                variant="outline"
+                className="h-8 w-8 p-0"
+                onClick={() => table.nextPage()}
+                disabled={!table.getCanNextPage()}
+              >
+                <span className="sr-only">次のページ</span>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                className="h-8 w-8 p-0"
+                onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+                disabled={!table.getCanNextPage()}
+              >
+                <span className="sr-only">最後のページ</span>
+                <ChevronsRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

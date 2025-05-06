@@ -71,6 +71,10 @@ const defaultValues: Partial<AddAdminFormValues> = {
 };
 
 // --- Component ---
+// This page component is now effectively replaced by the modal
+// and AddCompanyAdminForm.tsx. It can be removed or kept if
+// direct navigation to this form is still desired for some reason.
+// For this task, we assume it's replaced.
 export default function AddCompanyAdmin() {
   const navigate = useNavigate();
   const form = useForm<AddAdminFormValues>({
@@ -92,7 +96,7 @@ export default function AddCompanyAdmin() {
       ),
     });
     // Optionally navigate back to the list page after successful submission
-    // navigate('/company-admins');
+    navigate('/company-admins'); // This would typically be handled by the modal closing
     // Or reset the form
     // form.reset();
   }
@@ -100,6 +104,7 @@ export default function AddCompanyAdmin() {
   return (
     <div className="p-8">
       <h2 className="text-2xl font-semibold text-gray-900 mb-6">新規企業管理者登録</h2>
+      <p className="mb-4 text-gray-600">このページはモーダルに置き換えられました。`src/components/forms/AddCompanyAdminForm.tsx` と `src/pages/CompanyAdmins.tsx` を参照してください。</p>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 bg-white p-6 shadow rounded-lg max-w-2xl mx-auto">
           {/* Name */}

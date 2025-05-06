@@ -15,10 +15,7 @@ import {
   Plus,
   Edit,
   Trash2,
-  Copy,
-  Play,
-  Archive,
-  History,
+  // Copy, Play, Archive, History, // Removed unused icons
 } from "lucide-react";
 import {
   Table,
@@ -37,10 +34,10 @@ import {
 import {
   mockAssessmentVersions,
   findAssessmentById,
-} from "@/data/mockAssessmentVersions"; // Assuming versions data is here
-import { AssessmentVersion } from "@/types/assessment-version"; // Assuming version type is here
-import { AssessmentQuestion } from "@/types/assessment-question"; // Import question type
-import { getQuestionsForVersion } from "@/data/mockAssessmentQuestions"; // Import function to get questions
+} from "@/data/mockAssessmentVersions";
+import { AssessmentVersion } from "@/types/assessment-version";
+import { AssessmentQuestion } from "@/types/assessment-question";
+import { getQuestionsForVersion } from "@/data/mockAssessmentQuestions";
 
 // --- Helper Functions ---
 const formatDate = (dateString: string | undefined) => {
@@ -99,40 +96,40 @@ export default function AssessmentDetail() {
   const [selectedVersionId, setSelectedVersionId] = useState<string | null>(
     null
   );
-  const [questions, setQuestions] = useState<AssessmentQuestion[]>([]); // State for questions
+  const [questions, setQuestions] = useState<AssessmentQuestion[]>([]);
 
   useEffect(() => {
     if (assessmentId) {
       const foundAssessment = findAssessmentById(assessmentId);
       setAssessment(foundAssessment);
       if (foundAssessment) {
-        const foundVersions = mockAssessmentVersions[assessmentId] || [];
+        const foundVersions = JSON.parse(
+          JSON.stringify(mockAssessmentVersions[assessmentId] || [])
+        );
         setVersions(foundVersions);
-        // Select the latest version initially if available
         if (foundVersions.length > 0) {
           const latestVersion = foundVersions.sort(
-            (a, b) => b.versionNumber - a.versionNumber
+            (a: AssessmentVersion, b: AssessmentVersion) =>
+              b.versionNumber - a.versionNumber
           )[0];
           setSelectedVersionId(latestVersion.id);
         }
       } else {
-        // Handle assessment not found (e.g., show error, redirect)
         console.error("Assessment not found:", assessmentId);
-        navigate("/assessments"); // Redirect back to list
+        navigate("/assessments");
       }
     }
   }, [assessmentId, navigate]);
 
-  // Effect to load questions when selectedVersionId changes
   useEffect(() => {
     if (assessmentId && selectedVersionId) {
       const versionQuestions = getQuestionsForVersion(
         assessmentId,
         selectedVersionId
       );
-      setQuestions(versionQuestions.sort((a, b) => a.order - b.order)); // Sort questions by order
+      setQuestions(versionQuestions.sort((a, b) => a.order - b.order));
     } else {
-      setQuestions([]); // Clear questions if no version is selected
+      setQuestions([]);
     }
   }, [assessmentId, selectedVersionId]);
 
@@ -144,31 +141,6 @@ export default function AssessmentDetail() {
 
   const handleTabChange = (versionId: string) => {
     setSelectedVersionId(versionId);
-  };
-
-  // --- Placeholder Action Handlers ---
-  const handleCreateNewVersion = () => {
-    console.log("Create new version based on:", selectedVersionId);
-    // TODO: Implement logic to create a new draft version (likely API call)
-    alert("機能は未実装です: 新規バージョン作成");
-  };
-
-  const handleActivateVersion = (versionId: string) => {
-    console.log("Activate version:", versionId);
-    // TODO: Implement logic to activate version (API call, update state)
-    alert("機能は未実装です: バージョン配信開始");
-  };
-
-  const handleArchiveVersion = (versionId: string) => {
-    console.log("Archive version:", versionId);
-    // TODO: Implement logic to archive version (API call, update state)
-    alert("機能は未実装です: バージョンアーカイブ");
-  };
-
-  const handleViewHistory = (versionId: string) => {
-    console.log("View history for version:", versionId);
-    // TODO: Implement logic to show version history (modal or separate page)
-    alert("機能は未実装です: 変更履歴表示");
   };
 
   const handleEditQuestion = (questionId: string) => {
@@ -186,10 +158,16 @@ export default function AssessmentDetail() {
       "from version:",
       selectedVersionId
     );
-    // TODO: Implement logic to delete question (API call, update state)
     alert(`機能は未実装です: 設問削除 (ID: ${questionId})`);
-    // Optimistic UI update or refetch questions after deletion
-    setQuestions((prev) => prev.filter((q) => q.id !== questionId));
+    // In a real app, this would involve an API call and then updating the local questions state,
+    // or refetching questions for the version.
+    // For mock:
+    // const updatedQuestions = questions.filter(q => q.id !== questionId);
+    // setQuestions(updatedQuestions);
+    // // Also update mockAssessmentQuestions if you want "session persistence" for this action
+    // if (assessmentId && selectedVersionId) {
+    //   mockAssessmentQuestions[assessmentId][selectedVersionId] = updatedQuestions;
+    // }
   };
 
   const handleAddQuestion = () => {
@@ -217,7 +195,6 @@ export default function AssessmentDetail() {
               <CardTitle className="text-2xl">{assessment.title}</CardTitle>
               <CardDescription>
                 ID: {assessment.id} | カテゴリ: {assessment.category} | 難易度:{" "}
-                {assessment.difficulty}
               </CardDescription>
             </div>
             <Button
@@ -235,18 +212,6 @@ export default function AssessmentDetail() {
           </p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 text-sm">
             <div>
-              <span className="font-medium">想定時間:</span>{" "}
-              {assessment.estimatedTime}分
-            </div>
-            <div>
-              <span className="font-medium">対象スキル:</span>{" "}
-              {assessment.targetSkillLevel}
-            </div>
-            <div>
-              <span className="font-medium">ステータス:</span>{" "}
-              {getStatusBadge(assessment.status)}
-            </div>
-            <div>
               <span className="font-medium">作成日:</span>{" "}
               {formatDate(assessment.createdAt)}
             </div>
@@ -255,14 +220,13 @@ export default function AssessmentDetail() {
       </Card>
 
       <h2 className="text-xl font-semibold text-gray-800 mb-4">
-        バージョン管理と設問
+        バージョン情報と設問
       </h2>
 
       {versions.length === 0 ? (
         <Card>
           <CardContent className="p-6 text-center text-muted-foreground">
             まだバージョンが作成されていません。
-            {/* TODO: Add button to create first version */}
           </CardContent>
         </Card>
       ) : (
@@ -282,26 +246,7 @@ export default function AssessmentDetail() {
                   </TabsTrigger>
                 ))}
             </TabsList>
-            <TooltipProvider delayDuration={0}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleCreateNewVersion}
-                    disabled={!selectedVersionId}
-                  >
-                    <Copy className="mr-2 h-4 w-4" /> 選択中から新規作成
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>
-                    現在のバージョン ({selectedVersionId})
-                    をコピーして新しい下書きバージョンを作成します。
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            {/* Removed "Create new version from selected" button */}
           </div>
 
           {versions.map((version) => (
@@ -317,65 +262,13 @@ export default function AssessmentDetail() {
                         ステータス: {getStatusBadge(version.status)} | 作成日:{" "}
                         {formatDate(version.createdAt)} | 最終更新日:{" "}
                         {formatDate(version.updatedAt)}
+                        {version.createdBy && ` | 作成者: ${version.createdBy}`}
                       </CardDescription>
                     </div>
-                    <div className="flex gap-2">
-                      <TooltipProvider delayDuration={0}>
-                        {version.status === "draft" && (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                size="icon"
-                                variant="outline"
-                                onClick={() =>
-                                  handleActivateVersion(version.id)
-                                }
-                              >
-                                <Play className="h-4 w-4 text-green-600" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>このバージョンを配信開始</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        )}
-                        {(version.status === "draft" ||
-                          version.status === "active") && (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                size="icon"
-                                variant="outline"
-                                onClick={() => handleArchiveVersion(version.id)}
-                              >
-                                <Archive className="h-4 w-4 text-gray-600" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>このバージョンをアーカイブ</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        )}
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              size="icon"
-                              variant="outline"
-                              onClick={() => handleViewHistory(version.id)}
-                            >
-                              <History className="h-4 w-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>変更履歴を表示</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </div>
+                    {/* Removed version action buttons (Activate, Archive, History) */}
                   </div>
                 </CardHeader>
                 <CardContent>
-                  {/* Question List Section */}
                   <div className="mt-6">
                     <div className="flex justify-between items-center mb-4">
                       <h3 className="text-lg font-semibold">
