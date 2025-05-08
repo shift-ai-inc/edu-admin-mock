@@ -1,373 +1,243 @@
-import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  ArrowLeft,
-  Plus,
-  Edit,
-  Trash2,
-  // Copy, Play, Archive, History, // Removed unused icons
-} from "lucide-react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import {
-  mockAssessmentVersions,
-  findAssessmentById,
-} from "@/data/mockAssessmentVersions";
-import { AssessmentVersion } from "@/types/assessment-version";
-import { AssessmentQuestion } from "@/types/assessment-question";
-import { getQuestionsForVersion } from "@/data/mockAssessmentQuestions";
+import { useState, useEffect, useMemo } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { getAssessmentWithVersions, getAssessmentVersionDetails, addMockAssessmentVersion } from '@/data/mockAssessmentDetails';
+import { updateMockAssessment } from '@/data/mockAssessments';
+import { Assessment, AssessmentVersion, QuestionVersion, getAssessmentTypeName, getAssessmentDifficultyName, getSkillLevelName } from '@/types/assessment';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft, Edit, PlusCircle, GitBranch, HelpCircle } from 'lucide-react';
+import { DataTable } from '@/components/data-table';
+import { assessmentVersionColumns } from './assessment-version-columns';
+import { questionVersionColumns } from './question-version-columns';
+import { Badge } from '@/components/ui/badge';
+import { Row } from '@tanstack/react-table';
+import { EditAssessmentModal, AssessmentFormData } from '@/components/features/assessment/EditAssessmentModal';
+import { CreateAssessmentVersionModal, CreateVersionFormData } from '@/components/features/assessment/CreateAssessmentVersionModal';
+import { useToast } from '@/hooks/use-toast';
 
-// --- Helper Functions ---
-const formatDate = (dateString: string | undefined) => {
-  if (!dateString) return "N/A";
-  try {
-    return new Date(dateString).toLocaleDateString("ja-JP", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  } catch {
-    return "Invalid Date";
-  }
-};
 
-const getStatusBadge = (status: string | undefined) => {
-  switch (status) {
-    case "draft":
-      return <Badge variant="outline">下書き</Badge>;
-    case "active":
-      return (
-        <Badge variant="default" className="bg-green-500 hover:bg-green-600">
-          配信中
-        </Badge>
-      );
-    case "archived":
-      return <Badge variant="secondary">アーカイブ済</Badge>;
-    default:
-      return <Badge>{status || "不明"}</Badge>;
-  }
-};
-
-const getQuestionTypeLabel = (type: AssessmentQuestion["type"]) => {
-  switch (type) {
-    case "single-choice":
-      return "単一選択";
-    case "multiple-choice":
-      return "複数選択";
-    case "text":
-      return "テキスト入力";
-    default:
-      return type;
-  }
-};
-
-// --- Component ---
 export default function AssessmentDetail() {
-  const navigate = useNavigate();
   const { assessmentId } = useParams<{ assessmentId: string }>();
-  const [assessment, setAssessment] = useState<ReturnType<
-    typeof findAssessmentById
-  > | null>(null);
-  const [versions, setVersions] = useState<AssessmentVersion[]>([]);
-  const [selectedVersionId, setSelectedVersionId] = useState<string | null>(
-    null
-  );
-  const [questions, setQuestions] = useState<AssessmentQuestion[]>([]);
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [assessmentData, setAssessmentData] = useState<(Assessment & { versions: AssessmentVersion[] }) | null>(null);
+  const [selectedVersion, setSelectedVersion] = useState<AssessmentVersion | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isCreateVersionModalOpen, setIsCreateVersionModalOpen] = useState(false);
 
   useEffect(() => {
     if (assessmentId) {
-      const foundAssessment = findAssessmentById(assessmentId);
-      setAssessment(foundAssessment);
-      if (foundAssessment) {
-        const foundVersions = JSON.parse(
-          JSON.stringify(mockAssessmentVersions[assessmentId] || [])
-        );
-        setVersions(foundVersions);
-        if (foundVersions.length > 0) {
-          const latestVersion = foundVersions.sort(
-            (a: AssessmentVersion, b: AssessmentVersion) =>
-              b.versionNumber - a.versionNumber
-          )[0];
-          setSelectedVersionId(latestVersion.id);
+      const data = getAssessmentWithVersions(assessmentId);
+      setAssessmentData(data || null);
+      if (data && data.versions.length > 0) {
+        // Default to latest published, then latest overall, then first if no published
+        const latestPublished = data.versions.find(v => v.status === 'published');
+        const latestOverall = data.versions.sort((a,b) => b.versionNumber - a.versionNumber)[0];
+        const versionToSelect = latestPublished || latestOverall;
+        
+        if (versionToSelect) {
+            const fullVersionDetails = getAssessmentVersionDetails(assessmentId, versionToSelect.id);
+            setSelectedVersion(fullVersionDetails || versionToSelect);
+        } else {
+            setSelectedVersion(null);
         }
       } else {
-        console.error("Assessment not found:", assessmentId);
-        navigate("/assessments");
+        setSelectedVersion(null);
       }
     }
-  }, [assessmentId, navigate]);
+  }, [assessmentId]);
 
-  useEffect(() => {
-    if (assessmentId && selectedVersionId) {
-      const versionQuestions = getQuestionsForVersion(
-        assessmentId,
-        selectedVersionId
-      );
-      setQuestions(versionQuestions.sort((a, b) => a.order - b.order));
-    } else {
-      setQuestions([]);
+  const handleSelectVersion = (version: AssessmentVersion) => {
+    if (assessmentId) {
+      const fullVersionDetails = getAssessmentVersionDetails(assessmentId, version.id);
+      setSelectedVersion(fullVersionDetails || version);
     }
-  }, [assessmentId, selectedVersionId]);
+  };
+  
+  const memoizedAssessmentVersionColumns = useMemo(() => assessmentVersionColumns(handleSelectVersion), [assessmentId]);
+  const memoizedQuestionVersionColumns = useMemo(() => questionVersionColumns(navigate), [navigate]);
 
-  if (!assessment) {
+  const handleQuestionRowClick = (row: Row<QuestionVersion>) => {
+    const questionVersion = row.original;
+    navigate(`/assessments/questions/${questionVersion.id}`);
+  };
+
+  // Edit Assessment Modal
+  const handleOpenEditModal = () => {
+    if (assessmentData) {
+      setIsEditModalOpen(true);
+    } else {
+      toast({ title: "エラー", description: "アセスメントデータが読み込まれていません。", variant: "destructive" });
+    }
+  };
+  const handleCloseEditModal = () => setIsEditModalOpen(false);
+  const handleSaveAssessment = async (id: string, data: AssessmentFormData) => {
+    const updatedAssessment = updateMockAssessment(id, data);
+    if (updatedAssessment && assessmentData) {
+      setAssessmentData(prevData => {
+        if (!prevData) return null;
+        return { ...prevData, ...updatedAssessment };
+      });
+    } else {
+      console.error("Failed to update assessment in mock data or assessmentData is null");
+      throw new Error("Failed to update assessment");
+    }
+  };
+
+  // Create New Version Modal
+  const handleOpenCreateVersionModal = () => {
+    if (assessmentData) {
+      setIsCreateVersionModalOpen(true);
+    } else {
+      toast({ title: "エラー", description: "アセスメントデータが読み込まれていません。", variant: "destructive" });
+    }
+  };
+  const handleCloseCreateVersionModal = () => setIsCreateVersionModalOpen(false);
+  const handleSaveNewVersion = async (id: string, data: CreateVersionFormData): Promise<AssessmentVersion | null> => {
+    try {
+      const newVersion = addMockAssessmentVersion(id, data.description);
+      if (newVersion && assessmentData) {
+        setAssessmentData(prev => {
+          if (!prev) return null;
+          const updatedVersions = [...prev.versions, newVersion].sort((a,b) => b.versionNumber - a.versionNumber);
+          return { ...prev, versions: updatedVersions, updatedAt: new Date() };
+        });
+        setSelectedVersion(newVersion); // Select the newly created draft version
+        // Toast is handled by the modal on successful promise resolution
+        return newVersion;
+      } else {
+        throw new Error("新規バージョンの作成に失敗しました。");
+      }
+    } catch (error) {
+        toast({ title: "エラー", description: (error as Error).message || "新規バージョンの作成に失敗しました。", variant: "destructive" });
+        return null;
+    }
+  };
+
+
+  if (!assessmentData) {
     return (
-      <div className="p-8">読み込み中またはアセスメントが見つかりません...</div>
+      <div className="p-8 text-center">
+        <HelpCircle className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+        <h1 className="text-xl text-red-600">アセスメントが見つかりません</h1>
+        <p className="text-muted-foreground mb-4">ID: {assessmentId}</p>
+        <Button onClick={() => navigate('/assessments')} className="mt-4">
+          アセスメント一覧に戻る
+        </Button>
+      </div>
     );
   }
 
-  const handleTabChange = (versionId: string) => {
-    setSelectedVersionId(versionId);
-  };
-
-  const handleEditQuestion = (questionId: string) => {
-    if (assessmentId && selectedVersionId) {
-      navigate(
-        `/assessments/detail/${assessmentId}/versions/${selectedVersionId}/questions/edit/${questionId}`
-      );
-    }
-  };
-
-  const handleDeleteQuestion = (questionId: string) => {
-    console.log(
-      "Delete question:",
-      questionId,
-      "from version:",
-      selectedVersionId
-    );
-    alert(`機能は未実装です: 設問削除 (ID: ${questionId})`);
-    // In a real app, this would involve an API call and then updating the local questions state,
-    // or refetching questions for the version.
-    // For mock:
-    // const updatedQuestions = questions.filter(q => q.id !== questionId);
-    // setQuestions(updatedQuestions);
-    // // Also update mockAssessmentQuestions if you want "session persistence" for this action
-    // if (assessmentId && selectedVersionId) {
-    //   mockAssessmentQuestions[assessmentId][selectedVersionId] = updatedQuestions;
-    // }
-  };
-
-  const handleAddQuestion = () => {
-    if (assessmentId && selectedVersionId) {
-      navigate(
-        `/assessments/detail/${assessmentId}/versions/${selectedVersionId}/questions/add`
-      );
-    }
-  };
+  const { versions, ...baseAssessmentInfo } = assessmentData;
 
   return (
-    <div className="p-8">
-      <Button
-        onClick={() => navigate("/assessments")}
-        variant="outline"
-        className="mb-6"
-      >
-        <ArrowLeft className="mr-2 h-4 w-4" /> アセスメント一覧に戻る
-      </Button>
+    <div className="p-4 md:p-8 space-y-6">
+      <div className="flex items-center justify-between">
+        <Button variant="outline" onClick={() => navigate('/assessments')} className="flex items-center gap-2">
+          <ArrowLeft size={16} />
+          アセスメント一覧に戻る
+        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleOpenEditModal}>
+            <Edit size={16} className="mr-2" />
+            アセスメント編集
+          </Button>
+          <Button variant="outline" onClick={handleOpenCreateVersionModal}>
+            <PlusCircle size={16} className="mr-2" />
+            新規バージョン作成
+          </Button>
+        </div>
+      </div>
 
-      <Card className="mb-6">
+      <Card>
         <CardHeader>
-          <div className="flex justify-between items-start">
-            <div>
-              <CardTitle className="text-2xl">{assessment.title}</CardTitle>
-              <CardDescription>
-                ID: {assessment.id} | カテゴリ: {assessment.category} | 難易度:{" "}
-              </CardDescription>
-            </div>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => navigate(`/assessments/edit/${assessmentId}`)}
-            >
-              <Edit className="mr-2 h-4 w-4" /> 基本情報を編集
-            </Button>
-          </div>
+          <CardTitle className="text-2xl">{baseAssessmentInfo.title}</CardTitle>
+          <CardDescription>{baseAssessmentInfo.description}</CardDescription>
         </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            {assessment.description || "説明がありません。"}
-          </p>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 text-sm">
-            <div>
-              <span className="font-medium">作成日:</span>{" "}
-              {formatDate(assessment.createdAt)}
-            </div>
-          </div>
+        <CardContent className="grid md:grid-cols-3 gap-4 text-sm">
+          <div><strong>ID:</strong> {baseAssessmentInfo.id}</div>
+          <div><strong>種類:</strong> {getAssessmentTypeName(baseAssessmentInfo.type)}</div>
+          <div><strong>難易度:</strong> <Badge>{getAssessmentDifficultyName(baseAssessmentInfo.difficulty)}</Badge></div>
+          <div><strong>対象スキル:</strong> {baseAssessmentInfo.targetSkillLevel.map(getSkillLevelName).join(', ')}</div>
+          <div><strong>標準所要時間:</strong> {baseAssessmentInfo.estimatedDurationMinutes} 分</div>
+          <div><strong>総設問数 (最新):</strong> {baseAssessmentInfo.questionsCount}</div>
         </CardContent>
       </Card>
 
-      <h2 className="text-xl font-semibold text-gray-800 mb-4">
-        バージョン情報と設問
-      </h2>
-
-      {versions.length === 0 ? (
-        <Card>
-          <CardContent className="p-6 text-center text-muted-foreground">
-            まだバージョンが作成されていません。
-          </CardContent>
-        </Card>
-      ) : (
-        <Tabs value={selectedVersionId ?? ""} onValueChange={handleTabChange}>
-          <div className="flex justify-between items-center mb-4">
-            <TabsList>
-              {versions
-                .sort((a, b) => b.versionNumber - a.versionNumber)
-                .map((v) => (
-                  <TabsTrigger key={v.id} value={v.id}>
-                    Version {v.versionNumber}{" "}
-                    {v.status === "active"
-                      ? "(配信中)"
-                      : v.status === "draft"
-                      ? "(下書き)"
-                      : "(アーカイブ済)"}
-                  </TabsTrigger>
-                ))}
-            </TabsList>
-            {/* Removed "Create new version from selected" button */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <GitBranch size={20} />
+            <CardTitle>アセスメントバージョン履歴</CardTitle>
           </div>
+          <CardDescription>このアセスメントのバージョン一覧です。「設問一覧表示」ボタンで、そのバージョンの設問一覧を下に表示します。</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {versions && versions.length > 0 ? (
+            <DataTable columns={memoizedAssessmentVersionColumns} data={versions} />
+          ) : (
+            <p className="text-muted-foreground">利用可能なバージョンはありません。</p>
+          )}
+        </CardContent>
+      </Card>
 
-          {versions.map((version) => (
-            <TabsContent key={version.id} value={version.id} className="mt-0">
-              <Card>
-                <CardHeader>
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <CardTitle>
-                        Version {version.versionNumber} - 詳細
-                      </CardTitle>
-                      <CardDescription>
-                        ステータス: {getStatusBadge(version.status)} | 作成日:{" "}
-                        {formatDate(version.createdAt)} | 最終更新日:{" "}
-                        {formatDate(version.updatedAt)}
-                        {version.createdBy && ` | 作成者: ${version.createdBy}`}
-                      </CardDescription>
-                    </div>
-                    {/* Removed version action buttons (Activate, Archive, History) */}
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="mt-6">
-                    <div className="flex justify-between items-center mb-4">
-                      <h3 className="text-lg font-semibold">
-                        設問一覧 ({questions.length}件)
-                      </h3>
-                      <Button
-                        size="sm"
-                        onClick={handleAddQuestion}
-                        disabled={version.status !== "draft"}
-                      >
-                        <Plus className="mr-2 h-4 w-4" /> 設問を追加
-                      </Button>
-                    </div>
-                    {version.status !== "draft" && (
-                      <p className="text-sm text-orange-600 mb-4">
-                        注意:
-                        配信中またはアーカイブ済のバージョンの設問は編集・追加・削除できません。新しいバージョンを作成してください。
-                      </p>
-                    )}
-                    {questions.length > 0 ? (
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead className="w-[50px]">順序</TableHead>
-                            <TableHead>設問テキスト</TableHead>
-                            <TableHead className="w-[120px]">タイプ</TableHead>
-                            <TableHead className="w-[80px]">配点</TableHead>
-                            <TableHead className="w-[100px]">
-                              アクション
-                            </TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {questions.map((q) => (
-                            <TableRow key={q.id}>
-                              <TableCell>{q.order}</TableCell>
-                              <TableCell className="whitespace-pre-wrap break-words">
-                                {q.text}
-                              </TableCell>
-                              <TableCell>
-                                {getQuestionTypeLabel(q.type)}
-                              </TableCell>
-                              <TableCell>{q.points}</TableCell>
-                              <TableCell>
-                                <div className="flex gap-1">
-                                  <TooltipProvider delayDuration={0}>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          onClick={() =>
-                                            handleEditQuestion(q.id)
-                                          }
-                                          disabled={version.status !== "draft"}
-                                        >
-                                          <Edit className="h-4 w-4" />
-                                        </Button>
-                                      </TooltipTrigger>
-                                      <TooltipContent>
-                                        <p>編集</p>
-                                      </TooltipContent>
-                                    </Tooltip>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          className="text-destructive hover:text-destructive"
-                                          onClick={() =>
-                                            handleDeleteQuestion(q.id)
-                                          }
-                                          disabled={version.status !== "draft"}
-                                        >
-                                          <Trash2 className="h-4 w-4" />
-                                        </Button>
-                                      </TooltipTrigger>
-                                      <TooltipContent>
-                                        <p>削除</p>
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  </TooltipProvider>
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    ) : (
-                      <p className="text-sm text-muted-foreground text-center py-4">
-                        このバージョンにはまだ設問が登録されていません。
-                      </p>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          ))}
-        </Tabs>
+      {selectedVersion && (
+        <Card>
+          <CardHeader>
+             <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                    <HelpCircle size={20} />
+                    <CardTitle>設問一覧 (アセスメントバージョン: v{selectedVersion.versionNumber})</CardTitle>
+                </div>
+            </div>
+            <CardDescription>
+              アセスメントバージョン <strong>v{selectedVersion.versionNumber}</strong> ({selectedVersion.description}) に含まれる設問の一覧です。
+              設問内容でフィルタリングが可能です。行をクリックすると設問詳細ページに遷移します。
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {selectedVersion.questions && selectedVersion.questions.length > 0 ? (
+              <DataTable 
+                columns={memoizedQuestionVersionColumns} 
+                data={selectedVersion.questions}
+                filterInputPlaceholder="設問内容で検索..."
+                filterColumnId="questionData.text"
+                onRowClick={handleQuestionRowClick}
+              />
+            ) : (
+              <p className="text-muted-foreground">このバージョンには設問がありません。</p>
+            )}
+          </CardContent>
+          <CardFooter>
+            <p className="text-xs text-muted-foreground">
+              将来の改善: バージョン間の比較機能を提供し、設問の追加・変更・削除内容をハイライト表示します。各設問の詳細編集ページへのリンクも実装予定です。
+            </p>
+          </CardFooter>
+        </Card>
+      )}
+      {assessmentData && (
+         <EditAssessmentModal
+            isOpen={isEditModalOpen}
+            onClose={handleCloseEditModal}
+            assessment={{
+              id: baseAssessmentInfo.id,
+              title: baseAssessmentInfo.title,
+              description: baseAssessmentInfo.description,
+              type: baseAssessmentInfo.type,
+              difficulty: baseAssessmentInfo.difficulty,
+              targetSkillLevel: baseAssessmentInfo.targetSkillLevel,
+              estimatedDurationMinutes: baseAssessmentInfo.estimatedDurationMinutes,
+            }}
+            onSave={handleSaveAssessment}
+          />
+      )}
+      {assessmentData && (
+        <CreateAssessmentVersionModal
+          isOpen={isCreateVersionModalOpen}
+          onClose={handleCloseCreateVersionModal}
+          assessmentId={baseAssessmentInfo.id}
+          onSave={handleSaveNewVersion}
+        />
       )}
     </div>
   );

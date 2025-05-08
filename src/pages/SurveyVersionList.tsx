@@ -25,9 +25,10 @@ const formatDate = (dateString: string) => {
   }
 };
 
-const getStatusBadge = (status: 'draft' | 'active' | 'archived') => {
+const getStatusBadge = (status: 'draft' | 'active' | 'archived' | 'published') => {
   switch (status) {
     case 'active':
+    case 'published':
       return <Badge variant="default">公開中</Badge>;
     case 'draft':
       return <Badge variant="outline">下書き</Badge>;
@@ -47,7 +48,7 @@ export default function SurveyVersionList() {
       versions.forEach(version => {
         const questionCount = getQuestionsForSurveyVersion(surveyDefId, version.id).length;
         allVersions.push({
-          surveyDefinitionId: surveyDefId,
+          surveyId: surveyDefId,
           surveyTitle: surveyDefInfo?.title || 'N/A',
           versionId: version.id,
           versionNumber: version.versionNumber,

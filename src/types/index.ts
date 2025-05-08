@@ -1,91 +1,42 @@
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-}
+// src/types/index.ts
+export * from './billing';
+export * from './system-admin';
+export * from './displayable-versions';
 
-export interface Company {
-  id: string;
-  name: string;
-  industry: string;
-  adminName: string;
-  adminEmail: string;
-  status: "active" | "pending" | "suspended";
-  createdAt: string;
-}
+// Import and re-export only what's needed to avoid conflicts
+// From assessment
+import { 
+  Assessment, 
+  AssessmentType, 
+  AssessmentDifficulty,
+  AssessmentVersion,
+  getAssessmentTypeName,
+  getAssessmentDifficultyName
+} from './assessment';
 
-export interface SystemAdmin {
-  id: string;
-  name: string;
-  email: string;
-  role: "Super Admin" | "Admin" | "Support"; // Example roles
-  lastLogin: string;
-  status: "active" | "inactive";
-  createdAt: string;
-}
+// From survey
+import {
+  Survey,
+  SurveyType,
+  SurveyDifficulty,
+  SurveyVersion,
+  getSurveyTypeName,
+  getSurveyDifficultyName
+} from './survey';
 
-export interface CompanyAdmin {
-  id: string;
-  name: string;
-  email: string;
-  companyName?: string; // Optional: denormalized for display
-  createdAt: string;
-  lastLogin?: string;
-  groups?: string[]; // 担当部署/グループ
-}
+// Shared exports from assessment
+export type { Assessment };
+export type { AssessmentType };
+export type { AssessmentDifficulty };
+export type { AssessmentVersion };
+export { getAssessmentTypeName, getAssessmentDifficultyName };
 
-export interface Contract {
-  id: string;
-  companyId: string;
-  companyName: string; // Denormalized for easy display
-  plan: string;
-  startDate: string; // ISO Date string
-  endDate: string; // ISO Date string
-  status: "active" | "expired" | "cancelled" | "pending_renewal";
-  amount: string; // Monthly or annual amount
-  billingCycle: "monthly" | "annually";
-  autoRenew: boolean;
-  createdAt: string;
-  updatedAt: string;
-  userCount: number; // Number of users covered by the contract
-}
+// Shared exports from survey
+export type { Survey };
+export type { SurveyType };
+export type { SurveyDifficulty };
+export type { SurveyVersion };
+export { getSurveyTypeName, getSurveyDifficultyName };
 
-export interface BillingRecord {
-  id: string;
-  contractId: string;
-  invoiceNumber: string;
-  issueDate: string; // ISO Date string
-  dueDate: string; // ISO Date string
-  amount: number;
-  status: "paid" | "pending" | "overdue" | "cancelled";
-  paymentDate?: string; // ISO Date string, if paid
-  paymentMethod?: string; // e.g., "Credit Card", "Bank Transfer"
-  notes?: string;
-}
-
-// Added for AssessmentVersionList page
-export interface DisplayableAssessmentVersion {
-  assessmentId: string;
-  assessmentTitle: string;
-  versionId: string;
-  versionNumber: number;
-  createdAt: string;
-  createdBy?: string;
-  status: "draft" | "active" | "archived";
-  questionCount: number;
-  updatedAt: string;
-}
-
-// Added for SurveyVersionList page
-export interface DisplayableSurveyVersion {
-  surveyDefinitionId: string;
-  surveyTitle: string;
-  versionId: string;
-  versionNumber: number;
-  createdAt: string;
-  createdBy?: string;
-  status: "draft" | "active" | "archived";
-  questionCount: number;
-  updatedAt: string;
-}
+// Import and export survey definition
+export * from './survey-definition';
