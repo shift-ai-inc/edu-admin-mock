@@ -1,112 +1,58 @@
-export const mockContracts = [
+import { Contract } from '@/types/contract';
+// Ensure addDays is correctly imported from date-fns
+import { addYears, addMonths, subDays, formatISO, addDays } from 'date-fns';
+
+const now = new Date();
+
+export const mockContracts: Contract[] = [
   {
-    id: "CON-2023-001",
-    companyName: "株式会社テクノロジーズ",
-    plan: "エンタープライズ",
-    startDate: "2023-04-01",
-    endDate: "2025-03-31",
-    status: "active", // This status is contract's own status, not billing
-    amount: "¥2,400,000",
-    userCount: 500,
+    id: 'contract-001',
+    companyName: '株式会社サンプルテック',
+    serviceName: 'EduPlatform 年間ライセンス',
+    startDate: formatISO(addYears(now, -1)), // Started 1 year ago
+    endDate: formatISO(addMonths(now, 6)), // Ends in 6 months
+    autoRenew: true,
+    totalLicenses: 100,
+    usedLicenses: 75,
   },
   {
-    id: "CON-2023-002",
-    companyName: "ABCコンサルティング",
-    plan: "ビジネス",
-    startDate: "2023-05-15",
-    endDate: "2024-08-10",
-    status: "active",
-    amount: "¥1,200,000",
-    userCount: 100,
+    id: 'contract-002',
+    companyName: '合同会社デモクリエイト',
+    serviceName: '導入コンサルティング',
+    startDate: formatISO(addMonths(now, -3)), // Started 3 months ago
+    endDate: formatISO(addDays(now, 45)), // Ends in 45 days - Uses addDays
+    autoRenew: false,
+    totalLicenses: 10, // Consulting might not have user licenses, or could be project members
+    usedLicenses: 8,
   },
   {
-    id: "CON-2023-003",
-    companyName: "グローバルメディア株式会社",
-    plan: "スタンダード",
-    startDate: "2024-06-01",
-    endDate: "2024-07-25",
-    status: "active",
-    amount: "¥600,000",
-    userCount: 50,
+    id: 'contract-003',
+    companyName: 'テスト工業株式会社',
+    serviceName: 'カスタム開発契約',
+    startDate: formatISO(addYears(now, -2)), // Started 2 years ago
+    endDate: formatISO(subDays(now, 30)), // Ended 30 days ago
+    autoRenew: false,
+    totalLicenses: 50,
+    usedLicenses: 50, // All used or contract ended
   },
-  {
-    id: "CON-2024-004",
-    companyName: "スタートアップX",
-    plan: "スタンダード",
-    startDate: "2024-07-01",
-    endDate: "2024-07-15",
-    status: "active",
-    amount: "¥50,000",
-    userCount: 10,
+   {
+    id: 'contract-004',
+    companyName: '架空商事',
+    serviceName: 'サポート契約',
+    startDate: formatISO(addMonths(now, -11)), // Started 11 months ago
+    endDate: formatISO(addMonths(now, 1)), // Ends in 1 month
+    autoRenew: true,
+    totalLicenses: 200,
+    usedLicenses: 185, // High usage
   },
-  {
-    id: "CON-2022-042",
-    companyName: "フューチャーイノベーション",
-    plan: "エンタープライズ",
-    startDate: "2022-10-01",
-    endDate: "2023-09-30",
-    status: "expired",
-    amount: "¥2,400,000",
-    userCount: 450,
-  },
-  {
-    id: "CON-2022-038",
-    companyName: "スマートソリューションズ",
-    plan: "ビジネス",
-    startDate: "2022-08-15",
-    endDate: "2023-08-14",
-    status: "expired",
-    amount: "¥1,200,000",
-    userCount: 90,
-  },
-  {
-    id: "CON-2024-005",
-    companyName: "株式会社データドリブン",
-    plan: "ビジネス",
-    startDate: "2024-01-10",
-    endDate: "2025-01-09",
-    status: "active",
-    amount: "¥1,500,000",
-    userCount: 120,
-  },
-  {
-    id: "CON-2024-006",
-    companyName: "クリエイティブデザインスタジオ",
-    plan: "スタンダード",
-    startDate: "2024-03-01",
-    endDate: "2025-02-28",
-    status: "active",
-    amount: "¥700,000",
-    userCount: 60,
-  },
-  {
-    id: "CON-2023-007",
-    companyName: "ヘルステックソリューションズ",
-    plan: "エンタープライズ",
-    startDate: "2023-11-01",
-    endDate: "2024-10-31",
-    status: "active",
-    amount: "¥3,000,000",
-    userCount: 600,
-  },
-  {
-    id: "CON-2023-008",
-    companyName: "エデュケーショナルパートナーズ",
-    plan: "ビジネス",
-    startDate: "2023-09-01",
-    endDate: "2024-08-31",
-    status: "active",
-    amount: "¥1,000,000",
-    userCount: 80,
-  },
-  {
-    id: "CON-2022-009",
-    companyName: "レガシーシステムズ",
-    plan: "スタンダード",
-    startDate: "2022-07-01",
-    endDate: "2023-06-30",
-    status: "expired",
-    amount: "¥500,000",
-    userCount: 40,
+   {
+    id: 'contract-005',
+    companyName: '株式会社トライアル',
+    serviceName: 'EduPlatform 月間ライセンス',
+    startDate: formatISO(addDays(now, -15)), // Started 15 days ago - Uses addDays
+    endDate: formatISO(addDays(now, 15)), // Ends in 15 days - Uses addDays
+    autoRenew: false,
+    totalLicenses: 20,
+    usedLicenses: 5, // Low usage
   },
 ];

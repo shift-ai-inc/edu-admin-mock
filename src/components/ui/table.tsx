@@ -20,7 +20,8 @@ const TableHeader = React.forwardRef<
   HTMLTableSectionElement,
   React.HTMLAttributes<HTMLTableSectionElement>
 >(({ className, ...props }, ref) => (
-  <thead ref={ref} className={cn('[&_tr]:border-b', className)} {...props} />
+  // Added background color for better visual separation
+  <thead ref={ref} className={cn('[&_tr]:border-b bg-muted/50', className)} {...props} />
 ));
 TableHeader.displayName = 'TableHeader';
 
@@ -69,32 +70,43 @@ TableRow.displayName = 'TableRow';
 const TableHead = React.forwardRef<
   HTMLTableCellElement,
   React.ThHTMLAttributes<HTMLTableCellElement>
->(({ className, ...props }, ref) => (
+// Added padding prop for flexibility, especially for checkbox column
+>(({ className, children, ...props }, ref) => (
   <th
     ref={ref}
     className={cn(
-      'h-10 px-2 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]',
+      'h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0',
+      // Allow overriding padding via className
+      props.padding === 'checkbox' ? 'px-2' : 'px-4', // Specific padding for checkbox column
       className
     )}
     {...props}
-  />
+  >
+    {children}
+  </th>
 ));
 TableHead.displayName = 'TableHead';
 
+// Added padding prop to TableCell as well
 const TableCell = React.forwardRef<
   HTMLTableCellElement,
   React.TdHTMLAttributes<HTMLTableCellElement>
->(({ className, ...props }, ref) => (
+>(({ className, children, ...props }, ref) => (
   <td
     ref={ref}
     className={cn(
-      'p-2 align-middle [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]',
+      'p-4 align-middle [&:has([role=checkbox])]:pr-0',
+       // Allow overriding padding via className
+      props.padding === 'checkbox' ? 'px-2' : 'px-4', // Specific padding for checkbox column
       className
     )}
     {...props}
-  />
+  >
+    {children}
+  </td>
 ));
 TableCell.displayName = 'TableCell';
+
 
 const TableCaption = React.forwardRef<
   HTMLTableCaptionElement,
@@ -107,6 +119,18 @@ const TableCaption = React.forwardRef<
   />
 ));
 TableCaption.displayName = 'TableCaption';
+
+// Add padding prop type to ThHTMLAttributes and TdHTMLAttributes if needed,
+// or handle it directly in the component as done above.
+declare module 'react' {
+  interface ThHTMLAttributes<T> extends React.HTMLAttributes<T> {
+    padding?: 'checkbox' | 'none' | 'normal';
+  }
+  interface TdHTMLAttributes<T> extends React.HTMLAttributes<T> {
+    padding?: 'checkbox' | 'none' | 'normal';
+  }
+}
+
 
 export {
   Table,

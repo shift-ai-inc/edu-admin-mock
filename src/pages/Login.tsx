@@ -1,8 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Card,
   CardContent,
@@ -11,343 +9,220 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogClose,
-} from "@/components/ui/dialog";
+import { Key, Mail, AlertCircle, CheckCircle } from "lucide-react";
 
-interface LoginProps {
-  onLoginSuccess: () => void;
-}
+type AuthView = "login" | "resetRequest" | "resetConfirmation";
 
-export default function Login({ onLoginSuccess }: LoginProps) {
+export default function Login() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [currentView, setCurrentView] = useState<AuthView>("login");
   const [error, setError] = useState("");
-  const [activeTab, setActiveTab] = useState("login");
+  const [successMessage, setSuccessMessage] = useState("");
 
-  // States for Temporary Password Login
-  const [tempEmail, setTempEmail] = useState("");
-  const [tempPassword, setTempPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmNewPassword, setConfirmNewPassword] = useState("");
-  const [tempPasswordError, setTempPasswordError] = useState("");
-  const [tempPasswordSuccess, setTempPasswordSuccess] = useState(false);
-
-  // States for Password Reset Modal
-  const [resetModalOpen, setResetModalOpen] = useState(false);
-  const [resetModalEmail, setResetModalEmail] = useState("");
-  const [resetModalSuccess, setResetModalSuccess] = useState(false);
-  const [resetModalError, setResetModalError] = useState("");
-
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
+  const clearMessages = () => {
     setError("");
-
-    // Mock login logic (no validation, just credential check)
-    setTimeout(() => {
-      if (email === "admin@example.com" && password === "admin123") {
-        onLoginSuccess();
-        navigate("/");
-      } else {
-        setError("メールアドレスまたはパスワードが正しくありません。");
-      }
-      setIsLoading(false);
-    }, 1000);
+    setSuccessMessage("");
   };
 
-  const handleTempPasswordLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setTempPasswordError("");
-    setTempPasswordSuccess(false);
+  // Modified Login Handler - No validation, direct navigation
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault(); // Prevent default form submission
+    clearMessages(); // Clear any previous messages
+    console.log("Login button clicked, navigating to dashboard...");
+    // Directly navigate to the root, which redirects to dashboard
+    navigate("/");
+  };
 
-    if (newPassword !== confirmNewPassword) {
-      setTempPasswordError("新しいパスワードが一致しません。");
-      setIsLoading(false);
+  // Password Reset Request Handler (remains the same)
+  const handlePasswordResetRequest = (e: React.FormEvent) => {
+    e.preventDefault();
+    clearMessages();
+    if (!email) {
+      setError("メールアドレスを入力してください。");
       return;
     }
-
-    setTimeout(() => {
-      setTempPasswordSuccess(true);
-      setIsLoading(false);
-      setTempEmail("");
-      setTempPassword("");
-      setNewPassword("");
-      setConfirmNewPassword("");
-    }, 1000);
+    console.log("Requesting password reset for:", email);
+    setSuccessMessage(
+      `${email} にパスワードリセット用のリンクを送信しました。メールを確認してください。`
+    );
+    setCurrentView("resetConfirmation");
   };
 
-  const handlePasswordResetModalSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setResetModalError("");
-    setResetModalSuccess(false);
-
-    setTimeout(() => {
-      if (resetModalEmail) {
-        setResetModalSuccess(true);
-      } else {
-        setResetModalError("メールアドレスを入力してください。");
-      }
-      setIsLoading(false);
-    }, 1000);
-  };
-
-  const openResetModal = () => {
-    setResetModalEmail("");
-    setResetModalSuccess(false);
-    setResetModalError("");
-    setResetModalOpen(true);
-  };
-
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-100 p-4">
-      <div className="w-full max-w-md">
-        <div className="mb-8 text-center">
-          <h1 className="text-2xl font-bold text-gray-900">
-            SHIFT AI管理ポータル
-          </h1>
-          <p className="text-gray-600 mt-2">
-            企業アカウント・契約・アセスメント・サーベイの一元管理
-          </p>
-        </div>
-
-        <Tabs
-          value={activeTab}
-          onValueChange={(value) => {
-            setActiveTab(value);
-            setError("");
-            setTempPasswordError("");
-            setTempPasswordSuccess(false);
-          }}
-          className="w-full"
-        >
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="login">ログイン</TabsTrigger>
-            <TabsTrigger value="temp-password">
-              仮パスワードログイン
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="login">
-            <Card>
-              <CardHeader>
-                <CardTitle>ログイン</CardTitle>
-                <CardDescription>
-                  アカウント情報を入力してログインしてください
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleLogin}>
-                  {error && (
-                    <Alert variant="destructive" className="mb-4">
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertDescription>{error}</AlertDescription>
-                    </Alert>
-                  )}
-                  <div className="grid gap-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="email">メールアドレス</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        placeholder="admin@example.com"
-                        autoComplete="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        // required removed
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="password">パスワード</Label>
-                      <Input
-                        id="password"
-                        type="password"
-                        placeholder="••••••••"
-                        autoComplete="current-password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        // required removed
-                      />
-                    </div>
-                    <Button
-                      type="submit"
-                      className="w-full"
-                      disabled={isLoading}
-                    >
-                      {isLoading ? "ログイン中..." : "ログイン"}
-                    </Button>
-                  </div>
-                </form>
-              </CardContent>
-              <CardFooter className="flex flex-col items-start">
+  const renderLogin = () => (
+    <Card>
+      <CardHeader className="space-y-1">
+        <CardTitle className="text-2xl font-bold text-center">
+          SHIFT AI企業管理ポータル
+        </CardTitle>
+        <CardDescription className="text-center">
+          アカウント情報を入力してログインしてください
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {/* The form still calls handleLogin on submit */}
+        <form onSubmit={handleLogin}>
+          {error && ( // Error display remains for password reset flow
+            <Alert variant="destructive" className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+          {successMessage && ( // Success message display remains for password reset flow
+            <Alert variant="default" className="mb-4 bg-green-100 border-green-300">
+              <CheckCircle className="h-4 w-4 text-green-600" />
+              <AlertDescription className="text-green-800">{successMessage}</AlertDescription>
+            </Alert>
+          )}
+          <div className="grid gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="email">メールアドレス</Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="name@example.com"
+                  className="pl-10"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  // Removed required attribute
+                />
+              </div>
+            </div>
+            <div className="grid gap-2">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password">パスワード</Label>
                 <Button
+                  type="button"
                   variant="link"
-                  className="p-0 h-auto text-sm text-blue-600 hover:underline"
-                  onClick={openResetModal}
-                  type="button" // Add type="button" to prevent form submission if inside a form
+                  className="p-0 h-auto text-sm"
+                  onClick={() => {
+                    clearMessages();
+                    setCurrentView("resetRequest");
+                  }}
                 >
                   パスワードをお忘れですか？
                 </Button>
-              </CardFooter>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="temp-password">
-            <Card>
-              <CardHeader>
-                <CardTitle>仮パスワードでログイン</CardTitle>
-                <CardDescription>
-                  仮パスワードと新しいパスワードを入力してください
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleTempPasswordLogin}>
-                  {tempPasswordError && (
-                    <Alert variant="destructive" className="mb-4">
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertDescription>{tempPasswordError}</AlertDescription>
-                    </Alert>
-                  )}
-                  {tempPasswordSuccess && (
-                    <Alert className="mb-4 bg-green-50 text-green-800 border-green-200">
-                      <AlertDescription>
-                        パスワードが正常に変更されました。新しいパスワードでログインしてください。
-                      </AlertDescription>
-                    </Alert>
-                  )}
-                  <div className="grid gap-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="temp-email">メールアドレス</Label>
-                      <Input
-                        id="temp-email"
-                        type="email"
-                        placeholder="admin@example.com"
-                        autoComplete="email"
-                        value={tempEmail}
-                        onChange={(e) => setTempEmail(e.target.value)}
-                        disabled={tempPasswordSuccess}
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="temp-password">仮パスワード</Label>
-                      <Input
-                        id="temp-password"
-                        type="password"
-                        placeholder="仮パスワード"
-                        value={tempPassword}
-                        onChange={(e) => setTempPassword(e.target.value)}
-                        disabled={tempPasswordSuccess}
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="new-password">新しいパスワード</Label>
-                      <Input
-                        id="new-password"
-                        type="password"
-                        placeholder="新しいパスワード"
-                        value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
-                        disabled={tempPasswordSuccess}
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="confirm-new-password">
-                        新しいパスワード（確認）
-                      </Label>
-                      <Input
-                        id="confirm-new-password"
-                        type="password"
-                        placeholder="新しいパスワードを再入力"
-                        value={confirmNewPassword}
-                        onChange={(e) => setConfirmNewPassword(e.target.value)}
-                        disabled={tempPasswordSuccess}
-                      />
-                    </div>
-                    <Button
-                      type="submit"
-                      className="w-full"
-                      disabled={isLoading || tempPasswordSuccess}
-                    >
-                      {isLoading ? "処理中..." : "パスワード変更"}
-                    </Button>
-                  </div>
-                </form>
-              </CardContent>
-              <CardFooter>
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => setActiveTab("login")}
-                  disabled={tempPasswordSuccess}
-                >
-                  ログイン画面に戻る
-                </Button>
-              </CardFooter>
-            </Card>
-          </TabsContent>
-        </Tabs>
-
-        <Dialog open={resetModalOpen} onOpenChange={setResetModalOpen}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>パスワードリセット</DialogTitle>
-              <DialogDescription>
-                登録済みメールアドレスにリセットリンクを送信します。
-              </DialogDescription>
-            </DialogHeader>
-            <form onSubmit={handlePasswordResetModalSubmit}>
-              <div className="grid gap-4 py-4">
-                {resetModalError && (
-                  <Alert variant="destructive">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>{resetModalError}</AlertDescription>
-                  </Alert>
-                )}
-                {resetModalSuccess && (
-                  <Alert className="bg-green-50 text-green-800 border-green-200">
-                    <AlertDescription>
-                      パスワードリセットのリンクを送信しました。メールをご確認ください。
-                    </AlertDescription>
-                  </Alert>
-                )}
-                <div className="grid gap-2">
-                  <Label htmlFor="reset-modal-email">メールアドレス</Label>
-                  <Input
-                    id="reset-modal-email"
-                    type="email"
-                    placeholder="登録済みのメールアドレス"
-                    value={resetModalEmail}
-                    onChange={(e) => setResetModalEmail(e.target.value)}
-                    disabled={resetModalSuccess || isLoading}
-                  />
-                </div>
               </div>
-              <DialogFooter className="sm:justify-between">
-                <DialogClose asChild>
-                  <Button type="button" variant="outline" disabled={isLoading}>
-                    キャンセル
-                  </Button>
-                </DialogClose>
-                <Button type="submit" disabled={isLoading || resetModalSuccess}>
-                  {isLoading ? "送信中..." : "リセットリンクを送信"}
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
+              <div className="relative">
+                <Key className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="パスワード"
+                  className="pl-10"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  // Removed required attribute
+                />
+              </div>
+            </div>
+            {/* Button type is submit, triggering the form's onSubmit */}
+            <Button type="submit" className="w-full">
+              ログイン
+            </Button>
+          </div>
+        </form>
+      </CardContent>
+    </Card>
+  );
+
+  const renderResetRequest = () => (
+    <Card>
+      <CardHeader className="space-y-1">
+        <CardTitle className="text-2xl font-bold text-center">
+          パスワードリセット
+        </CardTitle>
+        <CardDescription className="text-center">
+          登録されているメールアドレスを入力してください。パスワードリセット用のリンクを送信します。
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handlePasswordResetRequest}>
+          {error && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+          <div className="grid gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="reset-email">メールアドレス</Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Input
+                  id="reset-email"
+                  type="email"
+                  placeholder="name@example.com"
+                  className="pl-10"
+                  value={email} // Use the same email state
+                  onChange={(e) => setEmail(e.target.value)}
+                  required // Keep required for reset request
+                />
+              </div>
+            </div>
+            <Button type="submit" className="w-full">
+              リセットリンクを送信
+            </Button>
+          </div>
+        </form>
+      </CardContent>
+      <CardFooter>
+        <Button
+          variant="link"
+          className="w-full"
+          onClick={() => {
+            clearMessages();
+            setCurrentView("login");
+          }}
+        >
+          ログインに戻る
+        </Button>
+      </CardFooter>
+    </Card>
+  );
+
+   const renderResetConfirmation = () => (
+    <Card>
+      <CardHeader className="space-y-1">
+        <CardTitle className="text-2xl font-bold text-center">
+          <CheckCircle className="inline-block h-6 w-6 mr-2 text-green-500" />
+          メールを確認してください
+        </CardTitle>
+        <CardDescription className="text-center px-4">
+          {successMessage}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="flex justify-center">
+         {/* Optionally add instructions like "Didn't receive email?" */}
+      </CardContent>
+      <CardFooter>
+        <Button
+          variant="link"
+          className="w-full"
+          onClick={() => {
+            clearMessages();
+            setCurrentView("login");
+          }}
+        >
+          ログインに戻る
+        </Button>
+      </CardFooter>
+    </Card>
+  );
+
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+      <div className="max-w-md w-full">
+        {currentView === "login" && renderLogin()}
+        {currentView === "resetRequest" && renderResetRequest()}
+        {currentView === "resetConfirmation" && renderResetConfirmation()}
       </div>
     </div>
   );

@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run build:*)",
+      "Bash(npm run build:*)",
+      "Bash(NODE_ENV=production npm run build)",
+      "Bash(NODE_ENV=production npm run build)",
+      "Bash(npx vite build:*)",
+      "Bash(npx vite build:*)"
+    ],
+    "deny": []
+  }
+}

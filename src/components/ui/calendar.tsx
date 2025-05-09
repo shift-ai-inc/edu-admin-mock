@@ -1,11 +1,107 @@
 import * as React from 'react';
 import { ChevronLeftIcon, ChevronRightIcon } from '@radix-ui/react-icons';
-import { DayPicker } from 'react-day-picker';
+import { DayPicker, CaptionProps } from 'react-day-picker'; // Import CaptionProps
+import { format } from 'date-fns'; // Import format
+import { ja } from 'date-fns/locale'; // Import Japanese locale
 
 import { cn } from '@/lib/utils';
 import { buttonVariants } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"; // Import Select components
 
 export type CalendarProps = React.ComponentProps<typeof DayPicker>;
+
+// Define extended props interface for our custom caption
+interface CustomCaptionProps extends CaptionProps {
+  goToMonth: (date: Date) => void;
+  previousMonth: Date | undefined;
+  nextMonth: Date | undefined;
+}
+
+// Custom Caption component for year/month dropdowns
+function CustomCaption(props: CustomCaptionProps) {
+  const { displayMonth } = props;
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: currentYear - 1989 }, (_, i) => currentYear - i); // Years from current down to 1990
+  const months = Array.from({ length: 12 }, (_, i) => i); // 0 to 11
+
+  const handleYearChange = (value: string) => {
+    const newDate = new Date(displayMonth);
+    newDate.setFullYear(parseInt(value, 10));
+    props.goToMonth(newDate); // Use goToMonth from props
+  };
+
+  const handleMonthChange = (value: string) => {
+    const newDate = new Date(displayMonth);
+    newDate.setMonth(parseInt(value, 10));
+     props.goToMonth(newDate); // Use goToMonth from props
+  };
+
+  return (
+    <div className="flex justify-between items-center px-2 py-1.5">
+       <div className="flex items-center gap-1">
+         <Select
+           value={displayMonth.getFullYear().toString()}
+           onValueChange={handleYearChange}
+         >
+           <SelectTrigger className="h-7 text-xs focus:ring-0 border-none shadow-none font-medium pr-1">
+             <SelectValue placeholder="年" />
+           </SelectTrigger>
+           <SelectContent>
+             {years.map((year) => (
+               <SelectItem key={year} value={year.toString()} className="text-xs">
+                 {year}年
+               </SelectItem>
+             ))}
+           </SelectContent>
+         </Select>
+         <Select
+           value={displayMonth.getMonth().toString()}
+           onValueChange={handleMonthChange}
+         >
+           <SelectTrigger className="h-7 text-xs focus:ring-0 border-none shadow-none font-medium pr-1">
+             <SelectValue placeholder="月" />
+           </SelectTrigger>
+           <SelectContent>
+             {months.map((month) => (
+               <SelectItem key={month} value={month.toString()} className="text-xs">
+                 {format(new Date(0, month), 'MMMM', { locale: ja })} {/* Display Japanese month name */}
+               </SelectItem>
+             ))}
+           </SelectContent>
+         </Select>
+       </div>
+       <div className="space-x-1 flex items-center">
+         <button
+           onClick={() => props.previousMonth && props.goToMonth(props.previousMonth)} // Use goToMonth
+           disabled={!props.previousMonth}
+           className={cn(
+             buttonVariants({ variant: 'outline' }),
+             'h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100'
+           )}
+         >
+           <ChevronLeftIcon className="h-4 w-4" />
+         </button>
+         <button
+           onClick={() => props.nextMonth && props.goToMonth(props.nextMonth)} // Use goToMonth
+           disabled={!props.nextMonth}
+           className={cn(
+             buttonVariants({ variant: 'outline' }),
+             'h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100'
+           )}
+         >
+           <ChevronRightIcon className="h-4 w-4" />
+         </button>
+       </div>
+    </div>
+  );
+}
+
 
 function Calendar({
   className,
@@ -20,15 +116,15 @@ function Calendar({
       classNames={{
         months: 'flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0',
         month: 'space-y-4',
-        caption: 'flex justify-center pt-1 relative items-center',
-        caption_label: 'text-sm font-medium',
-        nav: 'space-x-1 flex items-center',
-        nav_button: cn(
-          buttonVariants({ variant: 'outline' }),
-          'h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100'
-        ),
-        nav_button_previous: 'absolute left-1',
-        nav_button_next: 'absolute right-1',
+        // caption: 'flex justify-center pt-1 relative items-center', // Remove default caption style
+        // caption_label: 'text-sm font-medium', // Remove default caption label style
+        // nav: 'space-x-1 flex items-center', // Remove default nav style
+        // nav_button: cn( // Remove default nav button style
+        //   buttonVariants({ variant: 'outline' }),
+        //   'h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100'
+        // ),
+        // nav_button_previous: 'absolute left-1', // Remove default nav button style
+        // nav_button_next: 'absolute right-1', // Remove default nav button style
         table: 'w-full border-collapse space-y-1',
         head_row: 'flex',
         head_cell:
@@ -58,9 +154,11 @@ function Calendar({
         ...classNames,
       }}
       components={{
-        IconLeft: () => <ChevronLeftIcon className="h-4 w-4" />,
-        IconRight: () => <ChevronRightIcon className="h-4 w-4" />,
+        // IconLeft: ({ ...props }) => <ChevronLeftIcon className="h-4 w-4" />, // Use caption component instead
+        // IconRight: ({ ...props }) => <ChevronRightIcon className="h-4 w-4" />, // Use caption component instead
+        Caption: CustomCaption as React.ComponentType<CaptionProps>, // Type assertion to make TypeScript happy
       }}
+      locale={ja} // Set default locale to Japanese
       {...props}
     />
   );

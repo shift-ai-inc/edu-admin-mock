@@ -1,11 +1,6 @@
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 
@@ -15,8 +10,6 @@ export default function Settings() {
       <h2 className="text-2xl font-semibold text-gray-900 mb-6">設定</h2>
 
       <div className="grid gap-6">
-        {/* 一般設定カードを削除しました */}
-        {/* 
         <Card>
           <CardHeader>
             <CardTitle>一般設定</CardTitle>
@@ -35,12 +28,13 @@ export default function Settings() {
             </div>
           </CardContent>
         </Card>
-        */}
 
         <Card>
           <CardHeader>
             <CardTitle>通知設定</CardTitle>
-            <CardDescription>通知の受信設定を管理します</CardDescription>
+            <CardDescription>
+              通知の受信設定を管理します
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
@@ -82,7 +76,9 @@ export default function Settings() {
               <Switch />
             </div>
             <div className="pt-4">
-              <Button variant="outline">パスワードを変更</Button>
+              <Button variant="outline">
+                パスワードを変更
+              </Button>
             </div>
           </CardContent>
         </Card>

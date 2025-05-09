@@ -1,157 +1,206 @@
-import React, { useState, useMemo } from 'react';
-import { DataTable } from '@/components/data-table';
-import { surveyColumns } from './survey-columns'; // Changed
-import { mockSurveys } from '@/data/mockSurveys'; // Changed
-import { Survey, SurveyType, SurveyDifficulty, SkillLevel, getSurveyTypeName, getSurveyDifficultyName, getSkillLevelName } from '@/types/survey'; // Changed
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+// Copied and adapted from AssessmentList.tsx
+import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ListFilter, Search } from 'lucide-react';
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { mockAvailableSurveys } from '@/data/mockSurveys'; // Changed import
+import { AvailableSurvey } from '@/types/survey'; // Changed import
+import { Search, Filter, ArrowUpDown, Clock, Users, Send, Info } from 'lucide-react';
+import CreateSurveyDeliveryDialog from '@/components/CreateSurveyDeliveryDialog'; // Changed import
+import { useToast } from "@/hooks/use-toast";
 
-const surveyTypes: SurveyType[] = ["multiple-choice", "coding-test", "scenario-based", "video-submission"]; // Changed
-const surveyDifficulties: SurveyDifficulty[] = ["beginner", "intermediate", "advanced", "expert"]; // Changed
-const skillLevels: SkillLevel[] = ["entry", "junior", "mid-level", "senior", "lead"]; // Assuming this is applicable
+type SortKey = 'title' | 'estimatedTime' | 'category' | 'createdAt';
+type SortDirection = 'asc' | 'desc';
+type CategoryFilter = 'all' | '満足度調査' | '組織診断' | '研修評価' | 'その他'; // Survey specific categories
 
-
-export default function SurveyList() { // Changed
+export default function SurveyList() {
+  const [surveys, setSurveys] = useState<AvailableSurvey[]>([]); // Changed state name and type
+  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedTypes, setSelectedTypes] = useState<Set<SurveyType>>(new Set()); // Changed
-  const [selectedDifficulties, setSelectedDifficulties] = useState<Set<SurveyDifficulty>>(new Set()); // Changed
-  const [selectedSkillLevels, setSelectedSkillLevels] = useState<Set<SkillLevel>>(new Set());
+  const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all');
+  const [sortKey, setSortKey] = useState<SortKey>('createdAt');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  const [assigningSurvey, setAssigningSurvey] = useState<AvailableSurvey | null>(null); // Changed state name
+  const [isCreateDeliveryDialogOpen, setIsCreateDeliveryDialogOpen] = useState(false);
 
-  const filteredSurveys = useMemo(() => { // Changed
-    return mockSurveys.filter((survey) => { // Changed
-      const term = searchTerm.toLowerCase();
-      const matchesSearchTerm =
-        survey.title.toLowerCase().includes(term) ||
-        survey.description.toLowerCase().includes(term);
+  const { toast } = useToast();
+  const navigate = useNavigate();
 
-      const matchesType =
-        selectedTypes.size === 0 || selectedTypes.has(survey.type);
-      
-      const matchesDifficulty =
-        selectedDifficulties.size === 0 || selectedDifficulties.has(survey.difficulty);
+  useEffect(() => {
+    setIsLoading(true);
+    setTimeout(() => {
+      setSurveys(mockAvailableSurveys); // Changed data source
+      setIsLoading(false);
+    }, 50);
+  }, []);
 
-      const matchesSkillLevel = // Assuming targetSkillLevel is used for surveys
-        selectedSkillLevels.size === 0 || survey.targetSkillLevel.some(skill => selectedSkillLevels.has(skill));
-
-      return matchesSearchTerm && matchesType && matchesDifficulty && matchesSkillLevel;
+  const filteredAndSortedSurveys = useMemo(() => { // Changed variable name
+    let result = surveys.filter(survey => { // Changed variable name
+      const matchesSearch =
+        survey.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        survey.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        survey.category.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesCategory = categoryFilter === 'all' || survey.category === categoryFilter;
+      return matchesSearch && matchesCategory;
     });
-  }, [searchTerm, selectedTypes, selectedDifficulties, selectedSkillLevels]);
 
-  const toggleFilter = <T extends string>(set: Set<T>, item: T, setter: React.Dispatch<React.SetStateAction<Set<T>>>) => {
-    const newSet = new Set(set);
-    if (newSet.has(item)) {
-      newSet.delete(item);
+    result.sort((a, b) => {
+      let compareA = a[sortKey];
+      let compareB = b[sortKey];
+
+      if (sortKey === 'createdAt') {
+        compareA = new Date(a.createdAt).getTime();
+        compareB = new Date(b.createdAt).getTime();
+      } else if (sortKey === 'estimatedTime') {
+        compareA = Number(a.estimatedTime);
+        compareB = Number(b.estimatedTime);
+      }
+
+      let comparison = 0;
+      if (compareA > compareB) {
+        comparison = 1;
+      } else if (compareA < compareB) {
+        comparison = -1;
+      }
+      return sortDirection === 'desc' ? comparison * -1 : comparison;
+    });
+    return result;
+  }, [surveys, searchTerm, categoryFilter, sortKey, sortDirection]); // Changed dependency
+
+  const handleSortChange = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDirection(prev => (prev === 'asc' ? 'desc' : 'asc'));
     } else {
-      newSet.add(item);
+      setSortKey(key);
+      setSortDirection('asc');
     }
-    setter(newSet);
   };
 
+  const handleViewDetails = (surveyId: string) => { // Changed parameter name
+    navigate(`/surveys/${surveyId}`); // Changed path
+  };
+
+  const handleConfigureDeliveryClick = (survey: AvailableSurvey) => { // Changed parameter type
+    setAssigningSurvey(survey); // Changed state setter
+    setIsCreateDeliveryDialogOpen(true);
+  };
+
+  const handleDeliveryCreated = (details: any) => {
+     console.log("Survey Delivery creation successful (in parent list):", details);
+     toast({ title: "サーベイ配信設定完了", description: "サーベイの配信設定が正常に作成されました。" });
+  };
 
   return (
-    <div className="p-4 md:p-8">
-      <Card>
-        <CardHeader>
-          <CardTitle>サーベイ一覧</CardTitle> {/* Changed */}
-          <p className="text-sm text-muted-foreground">
-            配信可能なサーベイを管理します。 {/* Changed */}
-          </p>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 py-4">
-            <div className="relative w-full sm:max-w-xs">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="タイトルや説明で検索..."
-                value={searchTerm}
-                onChange={(event) => setSearchTerm(event.target.value)}
-                className="pl-9 w-full"
-              />
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="ml-auto">
-                    <ListFilter className="mr-2 h-4 w-4" />
-                    種類 ({selectedTypes.size > 0 ? selectedTypes.size : '全て'})
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>種類で絞り込み</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  {surveyTypes.map((type) => ( // Changed
-                    <DropdownMenuCheckboxItem
-                      key={type}
-                      checked={selectedTypes.has(type)}
-                      onCheckedChange={() => toggleFilter(selectedTypes, type, setSelectedTypes)}
-                    >
-                      {getSurveyTypeName(type)} {/* Changed */}
-                    </DropdownMenuCheckboxItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
+    <div className="p-8">
+      <h2 className="text-2xl font-semibold text-gray-900 mb-6">
+        サーベイ一覧
+      </h2>
 
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline">
-                    <ListFilter className="mr-2 h-4 w-4" />
-                    複雑度 ({selectedDifficulties.size > 0 ? selectedDifficulties.size : '全て'}) {/* Changed label */}
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>複雑度で絞り込み</DropdownMenuLabel> {/* Changed label */}
-                  <DropdownMenuSeparator />
-                  {surveyDifficulties.map((difficulty) => ( // Changed
-                    <DropdownMenuCheckboxItem
-                      key={difficulty}
-                      checked={selectedDifficulties.has(difficulty)}
-                      onCheckedChange={() => toggleFilter(selectedDifficulties, difficulty, setSelectedDifficulties)}
-                    >
-                      {getSurveyDifficultyName(difficulty)} {/* Changed */}
-                    </DropdownMenuCheckboxItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline">
-                    <ListFilter className="mr-2 h-4 w-4" />
-                    対象者 ({selectedSkillLevels.size > 0 ? selectedSkillLevels.size : '全て'}) {/* Changed label */}
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>対象者で絞り込み</DropdownMenuLabel> {/* Changed label */}
-                  <DropdownMenuSeparator />
-                  {skillLevels.map((level) => (
-                    <DropdownMenuCheckboxItem
-                      key={level}
-                      checked={selectedSkillLevels.has(level)}
-                      onCheckedChange={() => toggleFilter(selectedSkillLevels, level, setSelectedSkillLevels)}
-                    >
-                      {getSkillLevelName(level)}
-                    </DropdownMenuCheckboxItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </div>
-          <DataTable
-            columns={surveyColumns} // Changed
-            data={filteredSurveys} // Changed
+      <div className="mb-6 flex flex-wrap gap-4 items-center justify-between">
+        <div className="relative">
+          <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
+          <Input
+            placeholder="検索 (タイトル, 説明, カテゴリ)..."
+            className="pl-8 w-[300px] bg-white"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
-        </CardContent>
-      </Card>
+        </div>
+
+        <div className="flex flex-wrap gap-4 items-center">
+          <Select value={categoryFilter} onValueChange={(value) => setCategoryFilter(value as CategoryFilter)}>
+            <SelectTrigger className="w-[180px] bg-white">
+              <Filter className="mr-2 h-4 w-4" />
+              <SelectValue placeholder="カテゴリ" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">すべてのカテゴリ</SelectItem>
+              <SelectItem value="満足度調査">満足度調査</SelectItem>
+              <SelectItem value="組織診断">組織診断</SelectItem>
+              <SelectItem value="研修評価">研修評価</SelectItem>
+              <SelectItem value="その他">その他</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Button variant="outline" size="sm" onClick={() => handleSortChange('title')}>
+            タイトル
+            {sortKey === 'title' && <ArrowUpDown className="ml-2 h-4 w-4 opacity-50" />}
+          </Button>
+           <Button variant="outline" size="sm" onClick={() => handleSortChange('estimatedTime')}>
+             所要時間
+             {sortKey === 'estimatedTime' && <ArrowUpDown className="ml-2 h-4 w-4 opacity-50" />}
+           </Button>
+           <Button variant="outline" size="sm" onClick={() => handleSortChange('createdAt')}>
+             作成日
+             {sortKey === 'createdAt' && <ArrowUpDown className="ml-2 h-4 w-4 opacity-50" />}
+           </Button>
+        </div>
+      </div>
+
+      {isLoading ? (
+        <div className="text-center py-10">読み込み中...</div>
+      ) : filteredAndSortedSurveys.length === 0 ? ( // Changed variable name
+        <div className="text-center py-10 text-gray-500">該当するサーベイが見つかりません。</div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredAndSortedSurveys.map((survey) => ( // Changed variable name
+            <Card key={survey.id} className="flex flex-col justify-between hover:shadow-lg transition-shadow duration-200">
+              <CardHeader>
+                <div className="flex justify-between items-start mb-2">
+                   <CardTitle className="text-lg">{survey.title}</CardTitle>
+                   <Badge variant="secondary">{survey.category}</Badge>
+                </div>
+                <CardDescription className="text-sm line-clamp-3 h-[60px]">{survey.description}</CardDescription>
+              </CardHeader>
+              <CardContent className="flex-grow">
+                <div className="text-sm text-gray-600 space-y-1">
+                  <div className="flex items-center">
+                    <Clock className="mr-2 h-4 w-4 text-gray-500" />
+                    <span>所要時間: 約{survey.estimatedTime}分</span>
+                  </div>
+                  <div className="flex items-center">
+                    <Users className="mr-2 h-4 w-4 text-gray-500" />
+                    <span>利用回数: {survey.usageCount?.toLocaleString() ?? 'N/A'}</span>
+                  </div>
+                </div>
+              </CardContent>
+              <CardFooter className="flex justify-end gap-2">
+                <Button variant="outline" size="sm" onClick={() => handleViewDetails(survey.id)}>
+                  <Info className="mr-1.5 h-4 w-4" />
+                  詳細
+                </Button>
+                <Button size="sm" onClick={() => handleConfigureDeliveryClick(survey)}>
+                  <Send className="mr-1.5 h-4 w-4" />
+                  配信設定
+                </Button>
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
+      )}
+
+       <CreateSurveyDeliveryDialog // Changed component
+         survey={assigningSurvey} // Changed prop name
+         open={isCreateDeliveryDialogOpen}
+         onOpenChange={setIsCreateDeliveryDialogOpen}
+         onDeliveryCreated={handleDeliveryCreated}
+       />
     </div>
   );
 }
