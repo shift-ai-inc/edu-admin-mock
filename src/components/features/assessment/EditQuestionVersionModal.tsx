@@ -33,10 +33,11 @@ import {
   Question,
   QuestionVersion,
   QuestionType,
-  QuestionDifficulty, // Add this import
+  QuestionDifficulty,
   VersionStatus,
   getQuestionDifficultyName,
   getQuestionTypeName,
+  QUESTION_DIFFICULTIES, // Import constant for difficulty options
   getVersionStatusName,
 } from "@/types/assessment";
 
