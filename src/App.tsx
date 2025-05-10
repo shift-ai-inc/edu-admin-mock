@@ -1,119 +1,176 @@
-import { Routes, Route, Navigate, useLocation, matchPath } from 'react-router-dom';
-import Sidebar from './components/Sidebar';
-import Dashboard from './pages/Dashboard';
-import Companies from './pages/Companies';
-import CompanyInfo from './pages/CompanyInfo';
-import CompanyAdminList from './pages/CompanyAdminList';
-import CompanyAdminCreate from './pages/CompanyAdminCreate';
-import CompanyAdminEdit from './pages/CompanyAdminEdit';
-import GeneralUserList from './pages/GeneralUserList';
-import GeneralUserDetail from './pages/GeneralUserDetail';
-import BulkUserRegistration from './pages/BulkUserRegistration';
-import GroupManagement from './pages/GroupManagement';
-import GroupDetail from './pages/GroupDetail';
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+  useNavigate,
+} from "react-router-dom"; // Added useNavigate
+import {
+  LayoutDashboard,
+  Building,
+  FileText,
+  Settings as SettingsIcon,
+  UserCog,
+  ShieldCheck,
+  ClipboardList,
+  Vote,
+} from "lucide-react";
 
-import AssessmentList from './pages/AssessmentList';
-import AssessmentDetails from './pages/AssessmentDetails';
-import AssessmentDeliveryList from './pages/AssessmentDeliveryList';
-import AssessmentDeliveryDetailsPage from './pages/AssessmentDeliveryDetailsPage';
-import Assessment from './pages/Assessment';
-import DataAnalysisPage from './pages/DataAnalysisPage'; // Assessment Data Analysis
+import Layout from "./components/Layout";
 
-import SurveyList from './pages/SurveyList';
-import SurveyDetails from './pages/SurveyDetails';
-import SurveyDeliveryList from './pages/SurveyDeliveryList';
-import SurveyDeliveryDetailsPage from './pages/SurveyDeliveryDetailsPage'; // Added import
-import Survey from './pages/Survey';
-import SurveyDataAnalysisPage from './pages/SurveyDataAnalysisPage'; // Survey Data Analysis
+import Dashboard from "./pages/Dashboard";
+import SystemAdminManagement from "./pages/SystemAdminManagement";
+import AddSystemAdmin from "./pages/AddSystemAdmin";
+import SystemAdminDetail from "./pages/SystemAdminDetail";
+import EditSystemAdmin from "./pages/EditSystemAdmin";
+import Companies from "./pages/Companies";
+import AddCompany from "./pages/AddCompany";
+import UpdateCompany from "./pages/UpdateCompany";
+import Contracts from "./pages/Contracts";
+import ContractDetail from "./pages/ContractDetail";
+import SettingsPage from "./pages/Settings";
+import Login from "./pages/Login"; // Re-imported Login page
+import CompanyAdmins from "./pages/CompanyAdmins";
+import AddCompanyAdmin from "./pages/AddCompanyAdmin";
+import CompanyAdminDetail from "./pages/CompanyAdminDetail";
+import Profile from "./pages/Profile";
+import AssessmentList from "./pages/AssessmentList";
+import AssessmentDetail from "./pages/AssessmentDetail";
+import AssessmentQuestionDetail from "./pages/AssessmentQuestionDetail";
+import SurveyList from "./pages/SurveyList";
+import SurveyDetail from "./pages/SurveyDetail";
+import SurveyQuestionDetail from "./pages/SurveyQuestionDetail";
 
-import ContractManagement from './pages/ContractManagement';
-import PermissionLogList from './pages/PermissionLogList';
-import Settings from './pages/Settings';
-import Login from './pages/Login';
-import { Toaster } from "@/components/ui/toaster";
+interface NavItem {
+  to: string;
+  label: string;
+  icon: React.ElementType;
+  children?: NavItem[];
+}
 
+interface LayoutProps {
+  navItems: NavItem[];
+  isAuthenticated: boolean; // Add isAuthenticated prop
+  onLogout: () => void;
+}
 
-function App() {
-  const location = useLocation();
+const navItems: NavItem[] = [
+  { to: "/", label: "ダッシュボード", icon: LayoutDashboard },
+  {
+    to: "/assessments",
+    label: "アセスメント",
+    icon: ClipboardList,
+  },
+  {
+    to: "/surveys",
+    label: "サーベイ",
+    icon: Vote,
+  },
+  { to: "/companies", label: "企業一覧", icon: Building },
+  { to: "/company-admins", label: "企業管理者", icon: UserCog },
+  { to: "/contracts", label: "契約管理", icon: FileText },
+  { to: "/system-admins", label: "システム管理者管理", icon: ShieldCheck },
+  { to: "/settings", label: "設定", icon: SettingsIcon },
+];
 
-  const publicPaths = [
-    '/login',
-    '/assessment/:assessmentId',
-    '/survey/:surveyId',
-  ];
+function AppContent() {
+  const navigate = useNavigate();
 
-  const isPublicPath = publicPaths.some(path =>
-    matchPath(path, location.pathname)
-  );
+  const handleLoginSuccess = () => {
+    // In a real app, you might set auth tokens here
+    navigate("/");
+  };
 
-  const isAuthenticated = !isPublicPath;
-
-  const AuthLayout = ({ children }: { children: React.ReactNode }) => (
-    <div className="flex h-screen bg-gray-100">
-      <Sidebar />
-      <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 sm:ml-64">
-        {children}
-      </main>
-      <Toaster />
-    </div>
-  );
+  const handleLogout = () => {
+    // In a real app, you might clear auth tokens here
+    navigate("/auth");
+  };
 
   return (
     <Routes>
-      <Route path="/login" element={<Login />} />
-      <Route path="/assessment/:assessmentId" element={<Assessment />} />
-      <Route path="/survey/:surveyId" element={<Survey />} />
-
+      {/* Auth route is outside the main Layout */}
       <Route
-        path="/*"
-        element={
-          isAuthenticated ? (
-            <AuthLayout>
-              <Routes>
-                <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/companies" element={<Companies />} />
-                <Route path="/companies/:companyId/info" element={<CompanyInfo />} />
-                <Route path="/companies/:companyId/admins" element={<CompanyAdminList />} />
-                <Route path="/companies/:companyId/admins/create" element={<CompanyAdminCreate />} />
-                <Route path="/companies/:companyId/admins/edit/:adminId" element={<CompanyAdminEdit />} />
-
-                <Route path="/company-admins" element={<CompanyAdminList />} />
-                <Route path="/company-admins/create" element={<CompanyAdminCreate />} />
-                <Route path="/company-admins/edit/:adminId" element={<CompanyAdminEdit />} />
-
-                <Route path="/general-users" element={<GeneralUserList />} />
-                <Route path="/general-users/:userId" element={<GeneralUserDetail />} />
-                <Route path="/general-users/bulk-register" element={<BulkUserRegistration />} />
-                <Route path="/groups" element={<GroupManagement />} />
-                <Route path="/groups/:groupId" element={<GroupDetail />} />
-
-                <Route path="/assessments" element={<AssessmentList />} />
-                <Route path="/assessments/:assessmentId" element={<AssessmentDetails />} />
-                <Route path="/assessment-deliveries" element={<AssessmentDeliveryList />} />
-                <Route path="/assessment-deliveries/:deliveryId" element={<AssessmentDeliveryDetailsPage />} />
-                <Route path="/assessments/data-analysis" element={<DataAnalysisPage />} />
-
-                <Route path="/surveys" element={<SurveyList />} />
-                <Route path="/surveys/:surveyId" element={<SurveyDetails />} />
-                <Route path="/survey-deliveries" element={<SurveyDeliveryList />} />
-                <Route path="/survey-deliveries/:deliveryId" element={<SurveyDeliveryDetailsPage />} /> {/* Added route */}
-                <Route path="/surveys/data-analysis" element={<SurveyDataAnalysisPage />} />
-
-                <Route path="/contracts" element={<ContractManagement />} />
-                <Route path="/logs/permissions" element={<PermissionLogList />} />
-                <Route path="/settings" element={<Settings />} />
-                <Route path="/company-info" element={<CompanyInfo />} /> {/* Ensure this is correctly placed if it's a top-level page */}
-                <Route path="*" element={<Navigate to="/dashboard" replace />} />
-              </Routes>
-            </AuthLayout>
-          ) : (
-            <Navigate to="/login" replace />
-          )
-        }
+        path="/auth"
+        element={<Login onLoginSuccess={handleLoginSuccess} />}
       />
+
+      {/* Main application routes wrapped by Layout */}
+      <Route
+        element={
+          <Layout
+            navItems={navItems}
+            isAuthenticated={true}
+            onLogout={handleLogout}
+          />
+        }
+      >
+        <Route path="/" element={<Dashboard />} />
+
+        <Route path="/system-admins" element={<SystemAdminManagement />} />
+        <Route path="/system-admins/add" element={<AddSystemAdmin />} />
+        <Route
+          path="/system-admins/detail/:adminId"
+          element={<SystemAdminDetail />}
+        />
+        <Route
+          path="/system-admins/edit/:adminId"
+          element={<EditSystemAdmin />}
+        />
+
+        <Route path="/companies" element={<Companies />} />
+        <Route path="/companies/add" element={<AddCompany />} />
+        <Route
+          path="/companies/update/:companyId"
+          element={<UpdateCompany />}
+        />
+
+        <Route path="/company-admins" element={<CompanyAdmins />} />
+        <Route path="/company-admins/add" element={<AddCompanyAdmin />} />
+        <Route
+          path="/company-admins/detail/:adminId"
+          element={<CompanyAdminDetail />}
+        />
+
+        <Route path="/contracts" element={<Contracts />} />
+        <Route
+          path="/contracts/detail/:contractId"
+          element={<ContractDetail />}
+        />
+
+        <Route path="/assessments" element={<AssessmentList />} />
+        <Route
+          path="/assessments/detail/:assessmentId"
+          element={<AssessmentDetail />}
+        />
+        <Route
+          path="/assessments/questions/:questionVersionId"
+          element={<AssessmentQuestionDetail />}
+        />
+
+        <Route path="/surveys" element={<SurveyList />} />
+        <Route path="/surveys/detail/:surveyId" element={<SurveyDetail />} />
+        <Route
+          path="/surveys/questions/:questionVersionId"
+          element={<SurveyQuestionDetail />}
+        />
+
+        <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/profile" element={<Profile />} />
+
+        {/* Catch-all for routes within the layout, redirect to dashboard */}
+        {/* Ensure this is the last route within the Layout-wrapped routes */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Route>
+      {/* A general catch-all if no routes match (e.g. if /auth is mistyped), could redirect to /auth or / */}
+      <Route path="*" element={<Navigate to="/auth" replace />} />
     </Routes>
   );
 }
 
-export default App;
+export default function App() {
+  return (
+    <Router>
+      <AppContent />
+    </Router>
+  );
+}

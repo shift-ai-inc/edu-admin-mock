@@ -13,7 +13,7 @@ import {
   DialogTitle,
   DialogClose,
 } from "@/components/ui/dialog";
-import { Edit, AlertCircle, Save } from "lucide-react";
+import { AlertCircle, Save } from "lucide-react";
 import { Group } from "@/types/group";
 import { User } from "@/pages/GeneralUserList"; // Use User type
 
@@ -227,13 +227,13 @@ export function EditUserDialog({
                   {groups.map((group) => (
                     <div key={group.id} className="flex items-center space-x-2">
                       <Checkbox
-                        id={`edit-group-${group.id}`}
-                        checked={selectedGroups.includes(group.id)}
-                        onCheckedChange={() => handleGroupChange(group.id)}
+                        id={`edit-group-${String(group.id)}`}
+                        checked={selectedGroups.includes(String(group.id))}
+                        onCheckedChange={() => handleGroupChange(String(group.id))}
                         disabled={isLoading || !!successMessage}
                       />
                       <Label
-                        htmlFor={`edit-group-${group.id}`}
+                        htmlFor={`edit-group-${String(group.id)}`}
                         className="font-normal cursor-pointer"
                       >
                         {group.name}

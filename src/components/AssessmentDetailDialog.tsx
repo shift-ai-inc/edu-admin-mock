@@ -23,7 +23,7 @@ interface AssessmentDetailDialogProps {
 export default function AssessmentDetailDialog({ assessment, isOpen, onClose }: AssessmentDetailDialogProps) {
   if (!assessment) return null;
 
-  const totalQuestions = assessment.categories.reduce((sum, cat) => sum + cat.questionCount, 0);
+  const totalQuestions = assessment.categories.reduce((sum: number, cat: { questionCount: number }) => sum + cat.questionCount, 0);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -60,7 +60,7 @@ export default function AssessmentDetailDialog({ assessment, isOpen, onClose }: 
                 <div>
                   <h4 className="font-semibold mb-2 flex items-center"><Target className="mr-2 h-4 w-4" />対象スキル</h4>
                   <div className="flex flex-wrap gap-1">
-                    {assessment.targetSkills.map(skill => (
+                    {assessment.targetSkills.map((skill: string) => (
                       <Badge key={skill} variant="secondary">{skill}</Badge>
                     ))}
                   </div>
@@ -68,7 +68,7 @@ export default function AssessmentDetailDialog({ assessment, isOpen, onClose }: 
                  <div>
                   <h4 className="font-semibold mb-2 flex items-center"><Brain className="mr-2 h-4 w-4" />測定可能な能力</h4>
                   <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
-                     {assessment.measurableAbilities.map(ability => (
+                     {assessment.measurableAbilities.map((ability: string) => (
                        <li key={ability}>{ability}</li>
                      ))}
                   </ul>
@@ -77,7 +77,7 @@ export default function AssessmentDetailDialog({ assessment, isOpen, onClose }: 
                  <div>
                   <h4 className="font-semibold mb-2">タグ</h4>
                    <div className="flex flex-wrap gap-1">
-                    {assessment.tags.map(tag => (
+                    {assessment.tags.map((tag: string) => (
                       <Badge key={tag} variant="outline">{tag}</Badge>
                     ))}
                   </div>
@@ -95,7 +95,7 @@ export default function AssessmentDetailDialog({ assessment, isOpen, onClose }: 
                  <div>
                    <h4 className="font-semibold mb-2">カテゴリ別問題数</h4>
                    <ul className="list-none space-y-1 text-sm">
-                     {assessment.categories.map(cat => (
+                     {assessment.categories.map((cat: { name: string; questionCount: number }) => (
                        <li key={cat.name} className="flex justify-between">
                          <span>{cat.name}</span>
                          <span className="text-muted-foreground">{cat.questionCount} 問</span>
@@ -124,7 +124,7 @@ export default function AssessmentDetailDialog({ assessment, isOpen, onClose }: 
                <div className="space-y-4">
                  <h4 className="font-semibold mb-2">サンプル問題</h4>
                  {assessment.sampleQuestions.length > 0 ? (
-                   assessment.sampleQuestions.map((q, index) => (
+                   assessment.sampleQuestions.map((q: { id: string; type: string; text: string }, index: number) => (
                      <div key={q.id} className="p-3 border rounded-md bg-muted/50">
                        <p className="text-sm font-medium mb-1">サンプル {index + 1} ({q.type})</p>
                        <p className="text-sm text-muted-foreground">{q.text}</p>

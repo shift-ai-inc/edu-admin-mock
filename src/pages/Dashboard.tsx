@@ -1,254 +1,357 @@
 import {
   Card,
   CardContent,
+  CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
-  CardDescription,
 } from "@/components/ui/card";
 import {
   Users,
   Building2,
-  Users as UsersIcon,
-  ClipboardCheck,
+  AlertCircle,
   BarChart3,
-  ChevronRight,
-  ClipboardList,
+  FileText,
   Calendar,
-  Clock,
+  Bell,
+  ArrowUpRight,
+  ArrowDownRight,
+  MoreHorizontal,
+  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 
+// サンプルデータ
+const recentActivities = [
+  {
+    id: 1,
+    title: "株式会社テクノロジーズがサーベイに回答しました",
+    type: "survey",
+    time: "1時間前",
+  },
+  {
+    id: 2,
+    title: "新規契約: ABCコンサルティング",
+    type: "contract",
+    time: "3時間前",
+  },
+  {
+    id: 3,
+    title: "リーダーシップ能力診断の結果が更新されました",
+    type: "assessment",
+    time: "5時間前",
+  },
+  {
+    id: 4,
+    title: "グローバルメディア株式会社のアカウント情報が更新されました",
+    type: "company",
+    time: "1日前",
+  },
+  {
+    id: 5,
+    title: "新規アセスメント「チームワーク診断」が作成されました",
+    type: "assessment",
+    time: "1日前",
+  },
+];
+
+const upcomingSurveys = [
+  {
+    id: "SUR-2023-004",
+    title: "マネジメント評価サーベイ",
+    company: "フューチャーイノベーション",
+    date: "2023-07-01",
+    status: "scheduled",
+  },
+  {
+    id: "SUR-2023-005",
+    title: "1on1フィードバックサーベイ",
+    company: "スマートソリューションズ",
+    date: "2023-07-10",
+    status: "draft",
+  },
+];
+
+// アクティビティタイプに応じたアイコンを取得
+const getActivityIcon = (type: string) => {
+  switch (type) {
+    case "survey":
+      return <FileText className="h-4 w-4 text-blue-500" />;
+    case "contract":
+      return <FileText className="h-4 w-4 text-green-500" />;
+    case "assessment":
+      return <BarChart3 className="h-4 w-4 text-purple-500" />;
+    case "company":
+      return <Building2 className="h-4 w-4 text-orange-500" />;
+    default:
+      return <Bell className="h-4 w-4 text-gray-500" />;
+  }
+};
+
 export default function Dashboard() {
-  // ダミーデータ
-  const assessmentData = [40, 60, 75, 55, 80, 65, 90];
-  const surveyData = [25, 40, 30, 45, 55, 60, 70];
-  const months = ["6月", "7月", "8月", "9月", "10月", "11月", "12月"];
-
-  const recentActivities = [
-    {
-      id: 1,
-      user: "鈴木太郎",
-      action: "新規メンバーを追加しました",
-      time: "10分前",
-      avatar: "S",
-    },
-    {
-      id: 2,
-      user: "田中花子",
-      action: "アセスメントを配信しました",
-      time: "1時間前",
-      avatar: "T",
-    },
-    {
-      id: 3,
-      user: "佐藤次郎",
-      action: "グループを編集しました",
-      time: "3時間前",
-      avatar: "S",
-    },
-    {
-      id: 4,
-      user: "伊藤めぐみ",
-      action: "サーベイを作成しました",
-      time: "昨日",
-      avatar: "I",
-    },
-  ];
-
-  const upcomingSchedules = [
-    {
-      id: 1,
-      title: "リーダーシップアセスメント配信",
-      date: "2023年12月10日",
-      type: "assessment",
-    },
-    {
-      id: 2,
-      title: "エンゲージメントサーベイ配信",
-      date: "2023年12月15日",
-      type: "survey",
-    },
-    {
-      id: 3,
-      title: "四半期パフォーマンスレビュー",
-      date: "2023年12月25日",
-      type: "review",
-    },
-  ];
-
   return (
-    <div className="container mx-auto p-6 mt-6">
-      <Card>
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <CardTitle className="text-2xl font-bold text-gray-800">ダッシュボード</CardTitle>
-            <div className="flex gap-2">
-              <Button variant="outline">レポート出力</Button>
-              <Button>データ更新</Button>
+    <div className="p-8">
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-2xl font-semibold text-gray-900">
+            ダッシュボード
+          </h1>
+          <p className="text-gray-500 mt-1">
+            SHIFT AI管理ポータルのアクティビティと統計情報
+          </p>
+        </div>
+
+        <div className="flex space-x-2">
+          <Button variant="outline" className="flex items-center gap-1">
+            <Calendar className="h-4 w-4" />
+            今月
+          </Button>
+          <Button variant="outline">レポートを生成</Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">管理企業数</CardTitle>
+            <Building2 className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-baseline space-x-2">
+              <div className="text-3xl font-bold">2,350</div>
+              <div className="text-sm font-medium text-green-600 flex items-center">
+                <ArrowUpRight className="h-3 w-3 mr-1" />
+                8.3%
+              </div>
             </div>
-          </div>
-          <CardDescription>システムの概要と最近のアクティビティ</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-8">
-          {/* Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">総メンバー数</CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">1,286</div>
-                <p className="text-xs text-muted-foreground">+24 先月比</p>
-              </CardContent>
-            </Card>
+            <p className="text-xs text-muted-foreground mt-1">先月比 +180社</p>
+          </CardContent>
+        </Card>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">グループ数</CardTitle>
-                <UsersIcon className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">34</div>
-                <p className="text-xs text-muted-foreground">+2 先週比</p>
-              </CardContent>
-            </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              アクティブユーザー
+            </CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-baseline space-x-2">
+              <div className="text-3xl font-bold">12,234</div>
+              <div className="text-sm font-medium text-green-600 flex items-center">
+                <ArrowUpRight className="h-3 w-3 mr-1" />
+                2.1%
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">先週比 +250人</p>
+          </CardContent>
+        </Card>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  アセスメント回答率
-                </CardTitle>
-                <ClipboardCheck className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">78.5%</div>
-                <div className="mt-2">
-                  <Progress value={78.5} className="h-2" />
-                </div>
-              </CardContent>
-            </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              アセスメント利用率
+            </CardTitle>
+            <BarChart3 className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-baseline space-x-2">
+              <div className="text-3xl font-bold">74.5%</div>
+              <div className="text-sm font-medium text-green-600 flex items-center">
+                <ArrowUpRight className="h-3 w-3 mr-1" />
+                5.1%
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              先月比 +5.1ポイント
+            </p>
+            <Progress value={74.5} className="mt-2 h-1.5" />
+          </CardContent>
+        </Card>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  サーベイ完了率
-                </CardTitle>
-                <ClipboardList className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">64.2%</div>
-                <div className="mt-2">
-                  <Progress value={64.2} className="h-2" />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              未解決サポート
+            </CardTitle>
+            <AlertCircle className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-baseline space-x-2">
+              <div className="text-3xl font-bold">13</div>
+              <div className="text-sm font-medium text-red-600 flex items-center">
+                <ArrowDownRight className="h-3 w-3 mr-1" />
+                36%
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">先週比 -4件</p>
+          </CardContent>
+        </Card>
+      </div>
 
-          {/* Progress Chart and Upcoming Schedules */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <Card className="lg:col-span-2">
-              <CardHeader>
-                <CardTitle>半年間の進捗状況</CardTitle>
-                <CardDescription>アセスメントとサーベイの完了率</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {/* Placeholder for Chart */}
-                <div className="h-64 bg-gray-100 rounded flex items-center justify-center">
-                  <p className="text-gray-500">グラフ表示エリア</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>今後の予定</CardTitle>
-                <CardDescription>
-                  今後予定されているアセスメント・サーベイ
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {upcomingSchedules.map((schedule) => (
-                    <div key={schedule.id} className="flex items-start space-x-3">
-                      <div className="bg-primary/10 p-2 rounded-full">
-                        {schedule.type === "assessment" && (
-                          <ClipboardCheck className="h-4 w-4 text-primary" />
-                        )}
-                        {schedule.type === "survey" && (
-                          <ClipboardList className="h-4 w-4 text-primary" />
-                        )}
-                        {schedule.type === "review" && (
-                          <Calendar className="h-4 w-4 text-primary" />
-                        )}
-                      </div>
-                      <div className="flex-1 space-y-1">
-                        <div className="flex items-center justify-between">
-                          <p className="text-sm font-medium">{schedule.title}</p>
-                          <Badge variant="outline" className="text-xs">
-                            {schedule.type === "assessment"
-                              ? "アセスメント"
-                              : schedule.type === "survey"
-                              ? "サーベイ"
-                              : "レビュー"}
-                          </Badge>
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                          {schedule.date}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                  <Button variant="outline" className="w-full mt-2" size="sm">
-                    すべての予定を表示
-                    <ChevronRight className="ml-auto h-4 w-4" />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <Card className="col-span-1">
+          <CardHeader>
+            <CardTitle>最近のアクティビティ</CardTitle>
+            <CardDescription>システム全体の最新アクティビティ</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {recentActivities.map((activity) => (
+                <div key={activity.id} className="flex items-start space-x-3">
+                  <div className="mt-1">{getActivityIcon(activity.type)}</div>
+                  <div className="flex-1 space-y-1">
+                    <p className="text-sm font-medium leading-none">
+                      {activity.title}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {activity.time}
+                    </p>
+                  </div>
+                  <Button variant="ghost" size="icon" className="h-6 w-6">
+                    <MoreHorizontal className="h-3.5 w-3.5" />
                   </Button>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
+              ))}
+            </div>
+          </CardContent>
+          <CardFooter>
+            <Button variant="outline" className="w-full">
+              すべてのアクティビティを表示
+            </Button>
+          </CardFooter>
+        </Card>
 
-          {/* Recent Activities */}
-          <Card>
-            <CardHeader>
-              <CardTitle>最近のアクティビティ</CardTitle>
-              <CardDescription>システム上で行われた最近の操作</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {recentActivities.map((activity) => (
-                  <div key={activity.id} className="flex items-center space-x-4">
-                    <Avatar>
-                      <AvatarFallback>{activity.avatar}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 space-y-1">
-                      <p className="text-sm font-medium leading-none">
-                        {activity.user}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {activity.action}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="text-sm text-muted-foreground flex items-center">
-                        <Clock className="mr-1 h-3 w-3" />
-                        {activity.time}
-                      </div>
-                    </div>
-                  </div>
+        <Card className="col-span-1">
+          <CardHeader>
+            <CardTitle>予定されているサーベイ</CardTitle>
+            <CardDescription>今後2週間の予定</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>サーベイ名</TableHead>
+                  <TableHead>対象企業</TableHead>
+                  <TableHead>開始日</TableHead>
+                  <TableHead>ステータス</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {upcomingSurveys.map((survey) => (
+                  <TableRow key={survey.id}>
+                    <TableCell className="font-medium">
+                      {survey.title}
+                    </TableCell>
+                    <TableCell>{survey.company}</TableCell>
+                    <TableCell>
+                      {new Date(survey.date).toLocaleDateString("ja-JP")}
+                    </TableCell>
+                    <TableCell>
+                      {survey.status === "scheduled" ? (
+                        <Badge className="bg-blue-500">予定</Badge>
+                      ) : (
+                        <Badge variant="outline">下書き</Badge>
+                      )}
+                    </TableCell>
+                  </TableRow>
                 ))}
-                <Button variant="outline" className="w-full mt-2" size="sm">
-                  すべてのアクティビティを表示
-                  <ChevronRight className="ml-auto h-4 w-4" />
-                </Button>
+              </TableBody>
+            </Table>
+          </CardContent>
+          <CardFooter>
+            <Button
+              variant="outline"
+              className="w-full flex items-center justify-center"
+            >
+              すべてのサーベイ <ChevronRight className="ml-1 h-4 w-4" />
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card className="col-span-1 lg:col-span-2">
+          <CardHeader>
+            <CardTitle>アセスメント利用状況</CardTitle>
+            <CardDescription>過去30日間の利用統計</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px] flex items-center justify-center border border-dashed rounded-lg">
+              <div className="text-center">
+                <BarChart3 className="h-8 w-8 mx-auto text-gray-400" />
+                <p className="mt-2 text-sm text-gray-500">
+                  グラフ表示領域（実際の実装では、Rechartsなどのライブラリを使用）
+                </p>
               </div>
-            </CardContent>
-          </Card>
-        </CardContent>
-      </Card>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="col-span-1">
+          <CardHeader>
+            <CardTitle>人気アセスメント</CardTitle>
+            <CardDescription>利用企業数ランキング</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm font-medium">
+                    リーダーシップ能力診断
+                  </div>
+                  <div className="text-sm text-muted-foreground">65社</div>
+                </div>
+                <Progress value={65} className="h-1.5" />
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm font-medium">組織文化サーベイ</div>
+                  <div className="text-sm text-muted-foreground">52社</div>
+                </div>
+                <Progress value={52} className="h-1.5" />
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm font-medium">
+                    エンジニアスキル評価
+                  </div>
+                  <div className="text-sm text-muted-foreground">48社</div>
+                </div>
+                <Progress value={48} className="h-1.5" />
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm font-medium">
+                    マネジメントスキル診断
+                  </div>
+                  <div className="text-sm text-muted-foreground">41社</div>
+                </div>
+                <Progress value={41} className="h-1.5" />
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm font-medium">
+                    コミュニケーション適性テスト
+                  </div>
+                  <div className="text-sm text-muted-foreground">37社</div>
+                </div>
+                <Progress value={37} className="h-1.5" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

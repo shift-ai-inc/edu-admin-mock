@@ -14,6 +14,7 @@ import {
   CardHeader,
   CardTitle,
   CardFooter,
+  CardDescription, // Added CardDescription
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,7 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
+  DialogDescription as DialogDesc, // Renamed to avoid conflict
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -54,7 +55,7 @@ import {
   PaginationPrevious,
   PaginationEllipsis,
 } from "@/components/ui/pagination";
-import { mockContracts } from "@/data/mockContracts"; // Import from new location
+import { mockContracts } from "@/data/mockContracts";
 
 // --- Date & Status Logic for Contract Expiry ---
 const today = startOfDay(new Date());
@@ -144,7 +145,7 @@ export default function Contracts() {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
 
-  const filteredContracts = mockContracts.filter( // Use mockContracts from import
+  const filteredContracts = mockContracts.filter(
     (contract) =>
       contract.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       contract.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -258,7 +259,7 @@ export default function Contracts() {
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>新規契約の追加</DialogTitle>
-                <DialogDescription>新しい契約の詳細情報を入力してください</DialogDescription>
+                <DialogDesc>新しい契約の詳細情報を入力してください</DialogDesc>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 {/* Form fields for adding contract */}
@@ -266,7 +267,26 @@ export default function Contracts() {
                   <Label htmlFor="company" className="text-right">企業名</Label>
                   <Input id="company" placeholder="株式会社サンプル" className="col-span-3" />
                 </div>
-                {/* ... other fields ... */}
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="plan" className="text-right">プラン</Label>
+                  <Input id="plan" placeholder="ベーシック" className="col-span-3" />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="users" className="text-right">ユーザー数</Label>
+                  <Input id="users" type="number" placeholder="100" className="col-span-3" />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="startDate" className="text-right">開始日</Label>
+                  <Input id="startDate" type="date" className="col-span-3" />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="endDate" className="text-right">終了日</Label>
+                  <Input id="endDate" type="date" className="col-span-3" />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="amount" className="text-right">契約金額</Label>
+                  <Input id="amount" placeholder="¥1,000,000" className="col-span-3" />
+                </div>
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setShowAddDialog(false)}>キャンセル</Button>
@@ -280,7 +300,12 @@ export default function Contracts() {
       <Card>
         <CardHeader className="border-b">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <CardTitle>契約一覧</CardTitle>
+            <div>
+              <CardTitle>契約一覧</CardTitle>
+              <CardDescription className="mt-1">
+                登録されている契約の一覧です。クリックして詳細を表示できます。
+              </CardDescription>
+            </div>
             <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               <div className="relative w-full sm:w-auto">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
@@ -351,7 +376,7 @@ export default function Contracts() {
           </div>
         </CardContent>
         {totalPages > 0 && (
-          <CardFooter className="flex flex-col sm:flex-row items-center justify-between py-4">
+          <CardFooter className="flex flex-col sm:flex-row items-center justify-between py-4 border-t">
             <div className="text-xs text-muted-foreground mb-2 sm:mb-0">
               全 {filteredContracts.length} 件中 {indexOfFirstItem + 1} -{" "}
               {Math.min(indexOfLastItem, filteredContracts.length)} 件を表示
@@ -360,11 +385,11 @@ export default function Contracts() {
               <Pagination>
                 <PaginationContent>
                   <PaginationItem>
-                    <PaginationPrevious href="#" onClick={(e) => { e.preventDefault(); handlePageChange(currentPage - 1); }}/>
+                    <PaginationPrevious href="#" onClick={(e) => { e.preventDefault(); handlePageChange(currentPage - 1); }} disabled={currentPage === 1} />
                   </PaginationItem>
                   {renderPaginationItems()}
                   <PaginationItem>
-                    <PaginationNext href="#" onClick={(e) => { e.preventDefault(); handlePageChange(currentPage + 1); }}/>
+                    <PaginationNext href="#" onClick={(e) => { e.preventDefault(); handlePageChange(currentPage + 1); }} disabled={currentPage === totalPages} />
                   </PaginationItem>
                 </PaginationContent>
               </Pagination>

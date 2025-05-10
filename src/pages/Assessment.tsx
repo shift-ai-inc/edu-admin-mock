@@ -13,26 +13,26 @@ import {
   Search,
   Plus,
   MoreHorizontal,
-  FileText,
-  Calendar,
-  Clock,
-  Users,
+  // FileText, // Remove this line
+  // Calendar, // Remove this line
+  // Clock, // Remove this line
+  // Users, // Remove this line
   Mail,
   Copy,
   Trash2,
-  Clipboard,
+  // Clipboard, // Remove this line
   ClipboardCheck,
   BarChart,
-  ChevronRight,
+  // ChevronRight, // Remove this line
   Edit,
 } from "lucide-react";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
+  // CardDescription, // Remove this line
+  // CardFooter, // Remove this line
+  // CardHeader, // Remove this line
+  // CardTitle, // Remove this line
 } from "@/components/ui/card";
 import {
   DropdownMenu,
@@ -57,7 +57,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Tabs,
+  /* TabsContent, */ TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs"; // Remove TabsContent
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -196,7 +200,7 @@ const sampleGroups: Group[] = [
 ];
 
 export default function Assessment() {
-  const [assessments, setAssessments] =
+  const [, /* setAssessments */ setAssessments] = // assessments is unused, comment out setAssessments
     useState<Assessment[]>(sampleAssessments);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<string>("all"); // Changed initial value
@@ -330,7 +334,8 @@ export default function Assessment() {
               <SelectValue placeholder="ステータス" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">すべてのステータス</SelectItem> {/* Changed value */}
+              <SelectItem value="all">すべてのステータス</SelectItem>{" "}
+              {/* Changed value */}
               <SelectItem value="draft">下書き</SelectItem>
               <SelectItem value="scheduled">予約済</SelectItem>
               <SelectItem value="in_progress">実施中</SelectItem>
@@ -343,7 +348,8 @@ export default function Assessment() {
               <SelectValue placeholder="アセスメント種類" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">すべての種類</SelectItem> {/* Changed value */}
+              <SelectItem value="all">すべての種類</SelectItem>{" "}
+              {/* Changed value */}
               <SelectItem value="360度評価">360度評価</SelectItem>
               <SelectItem value="自己評価">自己評価</SelectItem>
               <SelectItem value="スキル評価">スキル評価</SelectItem>

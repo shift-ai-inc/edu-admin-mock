@@ -12,20 +12,20 @@ export const mockGroups: Group[] = [
 ];
 
 // Function to get group names by their IDs
-export const getGroupNamesByIds = (groupIds: number[]): string[] => {
+export const getGroupNamesByIds = (groupIds: (string | number)[]): string[] => {
   return groupIds
-    .map(id => mockGroups.find(group => group.id === id)?.name)
+    .map(id => mockGroups.find(group => group.id == id)?.name) // Use loose equality for string/number comparison
     .filter((name): name is string => name !== undefined); // Filter out undefined results and assert type
 };
 
 // Function to get a group by its ID
-export const getGroupById = (groupId: number): Group | undefined => {
-  return mockGroups.find(group => group.id === groupId);
+export const getGroupById = (groupId: string | number): Group | undefined => {
+  return mockGroups.find(group => group.id == groupId); // Use loose equality for string/number comparison
 };
 
 // Function to update a group
 export const updateGroup = (updatedGroup: Group): boolean => {
-  const index = mockGroups.findIndex(group => group.id === updatedGroup.id);
+  const index = mockGroups.findIndex(group => group.id == updatedGroup.id); // Use loose equality for string/number comparison
   if (index !== -1) {
     mockGroups[index] = updatedGroup;
     return true;

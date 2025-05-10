@@ -1,10 +1,23 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { useNavigate } from "react-router-dom"; // Import useNavigate
 
 export default function Settings() {
+  const navigate = useNavigate(); // Initialize useNavigate
+
+  const handleLogout = () => {
+    // In a real app, you might also clear tokens or user state
+    navigate("/auth");
+  };
+
   return (
     <div className="p-8">
       <h2 className="text-2xl font-semibold text-gray-900 mb-6">設定</h2>
@@ -12,29 +25,8 @@ export default function Settings() {
       <div className="grid gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>一般設定</CardTitle>
-            <CardDescription>
-              アプリケーションの基本設定を管理します
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="company-name">会社名</Label>
-              <Input id="company-name" defaultValue="株式会社サンプル" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="timezone">タイムゾーン</Label>
-              <Input id="timezone" defaultValue="Asia/Tokyo" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
             <CardTitle>通知設定</CardTitle>
-            <CardDescription>
-              通知の受信設定を管理します
-            </CardDescription>
+            <CardDescription>通知の受信設定を管理します</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
@@ -76,10 +68,20 @@ export default function Settings() {
               <Switch />
             </div>
             <div className="pt-4">
-              <Button variant="outline">
-                パスワードを変更
-              </Button>
+              <Button variant="outline">パスワードを変更</Button>
             </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>アカウント管理</CardTitle>
+            <CardDescription>アカウント関連の操作を行います</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button variant="destructive" onClick={handleLogout}>
+              ログアウト
+            </Button>
           </CardContent>
         </Card>
       </div>

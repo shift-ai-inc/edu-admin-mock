@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getQuestionVersionDetails, updateMockQuestionVersionContent } from '@/data/mockSurveyDetails'; // Changed to use survey details
 import { QuestionVersion, getQuestionTypeName, getQuestionDifficultyName, getVersionStatusName } from '@/types/survey'; // Changed to use survey types

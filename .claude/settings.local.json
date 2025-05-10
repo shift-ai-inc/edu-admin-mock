@@ -6,7 +6,8 @@
       "Bash(NODE_ENV=production npm run build)",
       "Bash(NODE_ENV=production npm run build)",
       "Bash(npx vite build:*)",
-      "Bash(npx vite build:*)"
+      "Bash(npx vite build:*)",
+      "Bash(vite build)"
     ],
     "deny": []
   }

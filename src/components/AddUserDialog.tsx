@@ -251,13 +251,13 @@ export function AddUserDialog({
                   {groups.map((group) => (
                     <div key={group.id} className="flex items-center space-x-2">
                       <Checkbox
-                        id={`group-modal-${group.id}`} // Ensure unique ID for modal checkbox
-                        checked={selectedGroups.includes(group.id)}
-                        onCheckedChange={() => handleGroupChange(group.id)}
+                        id={`group-modal-${String(group.id)}`} // Ensure unique ID for modal checkbox
+                        checked={selectedGroups.includes(String(group.id))}
+                        onCheckedChange={() => handleGroupChange(String(group.id))}
                         disabled={isLoading || !!successMessage} // Disable after success
                       />
                       <Label
-                        htmlFor={`group-modal-${group.id}`}
+                        htmlFor={`group-modal-${String(group.id)}`}
                         className="font-normal cursor-pointer"
                       >
                         {group.name}

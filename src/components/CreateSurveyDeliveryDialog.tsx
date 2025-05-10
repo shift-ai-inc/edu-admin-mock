@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon, Users, Building, User as UserIcon, AlertTriangle } from 'lucide-react'; // Renamed User to UserIcon to avoid conflict
@@ -230,7 +231,7 @@ export default function CreateSurveyDeliveryDialog({
                   {selectedTargets.map(st => (
                     <Badge key={st.id} variant="secondary" className="py-1">
                       {st.name}
-                      <Button variant="ghost" size="xs" className="ml-1 h-auto p-0 text-muted-foreground hover:text-destructive" onClick={() => toggleTargetSelection(st)}>✕</Button>
+                      <Button variant="ghost" size="sm" className="ml-1 h-auto p-0 text-muted-foreground hover:text-destructive" onClick={() => toggleTargetSelection(st)}>✕</Button>
                     </Badge>
                   ))}
                 </div>

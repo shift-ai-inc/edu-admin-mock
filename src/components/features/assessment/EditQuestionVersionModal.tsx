@@ -1,8 +1,8 @@
-import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { Button } from '@/components/ui/button';
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -10,7 +10,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -18,62 +18,83 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { useToast } from '@/hooks/use-toast';
-import { 
-  QuestionVersion, 
-  QuestionDifficulty, 
-  getQuestionDifficultyName, 
-  getQuestionTypeName 
-} from '@/types/assessment';
-
-// Use explicit difficulties rather than the array from the import
-const QUESTION_DIFFICULTIES = ['easy', 'medium', 'hard'] as const;
+} from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+import {
+  Question,
+  QuestionVersion,
+  QuestionType,
+  QuestionDifficulty, // Add this import
+  VersionStatus,
+  getQuestionDifficultyName,
+  getQuestionTypeName,
+  getVersionStatusName,
+} from "@/types/assessment";
 
 const editQuestionVersionFormSchema = z.object({
   questionData: z.object({
-    text: z.string().min(10, { message: "設問内容は10文字以上で入力してください。" }),
+    text: z
+      .string()
+      .min(10, { message: "設問内容は10文字以上で入力してください。" }),
     category: z.string().min(1, { message: "カテゴリを入力してください。" }),
     points: z.coerce
       .number({ invalid_type_error: "数値を入力してください。" })
       .int({ message: "整数を入力してください。" })
       .positive({ message: "配点は正の数である必要があります。" }),
-    difficulty: z.enum(QUESTION_DIFFICULTIES, { required_error: "難易度を選択してください。" }),
+    difficulty: z.enum(
+      QUESTION_DIFFICULTIES.map((diff) => diff as string) as [
+        string,
+        ...string[]
+      ],
+      { required_error: "難易度を選択してください。" }
+    ),
     // type, options, correctAnswer are not editable in this modal for now
   }),
-  changeLog: z.string().min(5, { message: "変更理由は5文字以上で入力してください。" }),
+  changeLog: z
+    .string()
+    .min(5, { message: "変更理由は5文字以上で入力してください。" }),
 });
 
-export type EditQuestionVersionFormData = z.infer<typeof editQuestionVersionFormSchema>;
+export type EditQuestionVersionFormData = z.infer<
+  typeof editQuestionVersionFormSchema
+>;
 
 interface EditQuestionVersionModalProps {
   isOpen: boolean;
   onClose: () => void;
   questionVersion: QuestionVersion | null;
-  onSave: (questionVersionId: string, data: EditQuestionVersionFormData) => Promise<QuestionVersion | null>;
+  onSave: (
+    questionVersionId: string,
+    data: EditQuestionVersionFormData
+  ) => Promise<QuestionVersion | null>;
 }
 
-export function EditQuestionVersionModal({ isOpen, onClose, questionVersion, onSave }: EditQuestionVersionModalProps) {
+export function EditQuestionVersionModal({
+  isOpen,
+  onClose,
+  questionVersion,
+  onSave,
+}: EditQuestionVersionModalProps) {
   const { toast } = useToast();
   const form = useForm<EditQuestionVersionFormData>({
     resolver: zodResolver(editQuestionVersionFormSchema),
     defaultValues: {
       questionData: {
-        text: '',
-        category: '',
+        text: "",
+        category: "",
         points: 10, // Default points
-        difficulty: 'medium', // Default difficulty
+        difficulty: "medium", // Default difficulty
       },
-      changeLog: '',
+      changeLog: "",
     },
   });
 
@@ -86,18 +107,19 @@ export function EditQuestionVersionModal({ isOpen, onClose, questionVersion, onS
           points: questionVersion.questionData.points,
           difficulty: questionVersion.questionData.difficulty,
         },
-        changeLog: questionVersion.changeLog || '', // Use existing changelog or empty
+        changeLog: questionVersion.changeLog || "", // Use existing changelog or empty
       });
     } else if (!isOpen) {
-        form.reset({ // Reset to default if modal is closed or no questionVersion
-            questionData: {
-                text: '',
-                category: '',
-                points: 10,
-                difficulty: 'medium',
-            },
-            changeLog: '',
-        });
+      form.reset({
+        // Reset to default if modal is closed or no questionVersion
+        questionData: {
+          text: "",
+          category: "",
+          points: 10,
+          difficulty: "medium",
+        },
+        changeLog: "",
+      });
     }
   }, [isOpen, questionVersion, form]);
 
@@ -107,8 +129,8 @@ export function EditQuestionVersionModal({ isOpen, onClose, questionVersion, onS
       const updatedVersion = await onSave(questionVersion.id, data);
       if (updatedVersion) {
         toast({
-          title: '成功',
-          description: '設問情報が更新されました。',
+          title: "成功",
+          description: "設問情報が更新されました。",
         });
         onClose();
       }
@@ -116,9 +138,9 @@ export function EditQuestionVersionModal({ isOpen, onClose, questionVersion, onS
     } catch (error) {
       // Fallback, should be handled by onSave
       toast({
-        title: 'エラー',
-        description: '設問情報の更新に失敗しました。',
-        variant: 'destructive',
+        title: "エラー",
+        description: "設問情報の更新に失敗しました。",
+        variant: "destructive",
       });
     }
   };
@@ -126,28 +148,52 @@ export function EditQuestionVersionModal({ isOpen, onClose, questionVersion, onS
   if (!questionVersion) return null; // Or some loading/error state if preferred
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+    >
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>設問内容編集 (バージョン: v{questionVersion.versionNumber})</DialogTitle>
+          <DialogTitle>
+            設問内容編集 (バージョン: v{questionVersion.versionNumber})
+          </DialogTitle>
           <DialogDescription>
             設問の内容とこのバージョンの変更理由を編集します。
             設問タイプ、選択肢、正解はここでは編集できません。
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 py-4 max-h-[70vh] overflow-y-auto pr-2">
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="space-y-6 py-4 max-h-[70vh] overflow-y-auto pr-2"
+          >
             <div className="space-y-2 p-3 border rounded-md bg-muted/30">
-                <p className="text-sm font-medium">設問タイプ: {getQuestionTypeName(questionVersion.questionData.type)}</p>
-                {(questionVersion.questionData.type === 'multiple-choice' || questionVersion.questionData.type === 'single-choice') && questionVersion.questionData.options && (
-                    <div>
-                        <p className="text-sm font-medium">選択肢:</p>
-                        <ul className="list-disc list-inside pl-4 text-sm text-muted-foreground">
-                            {questionVersion.questionData.options.map((opt, i) => <li key={i}>{opt}</li>)}
-                        </ul>
-                    </div>
+              <p className="text-sm font-medium">
+                設問タイプ:{" "}
+                {getQuestionTypeName(questionVersion.questionData.type)}
+              </p>
+              {(questionVersion.questionData.type === "multiple-choice" ||
+                questionVersion.questionData.type === "single-choice") &&
+                questionVersion.questionData.options && (
+                  <div>
+                    <p className="text-sm font-medium">選択肢:</p>
+                    <ul className="list-disc list-inside pl-4 text-sm text-muted-foreground">
+                      {questionVersion.questionData.options.map((opt, i) => (
+                        <li key={i}>{opt}</li>
+                      ))}
+                    </ul>
+                  </div>
                 )}
-                 <p className="text-sm font-medium">正解: <span className="text-muted-foreground">{Array.isArray(questionVersion.questionData.correctAnswer) ? questionVersion.questionData.correctAnswer.join(', ') : questionVersion.questionData.correctAnswer || '未設定'}</span></p>
+              <p className="text-sm font-medium">
+                正解:{" "}
+                <span className="text-muted-foreground">
+                  {Array.isArray(questionVersion.questionData.correctAnswer)
+                    ? questionVersion.questionData.correctAnswer.join(", ")
+                    : questionVersion.questionData.correctAnswer || "未設定"}
+                </span>
+              </p>
             </div>
 
             <FormField
@@ -157,7 +203,11 @@ export function EditQuestionVersionModal({ isOpen, onClose, questionVersion, onS
                 <FormItem>
                   <FormLabel>設問内容</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="設問の本文を入力してください。" {...field} rows={5} />
+                    <Textarea
+                      placeholder="設問の本文を入力してください。"
+                      {...field}
+                      rows={5}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -196,7 +246,10 @@ export function EditQuestionVersionModal({ isOpen, onClose, questionVersion, onS
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>難易度</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="難易度を選択" />
@@ -205,7 +258,9 @@ export function EditQuestionVersionModal({ isOpen, onClose, questionVersion, onS
                       <SelectContent>
                         {QUESTION_DIFFICULTIES.map((difficulty) => (
                           <SelectItem key={difficulty} value={difficulty}>
-                            {getQuestionDifficultyName(difficulty)}
+                            {getQuestionDifficultyName(
+                              difficulty as QuestionDifficulty
+                            )}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -222,14 +277,23 @@ export function EditQuestionVersionModal({ isOpen, onClose, questionVersion, onS
                 <FormItem>
                   <FormLabel>変更理由 (このバージョンへの変更点)</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="このバージョンでの変更内容や理由を記述してください。" {...field} rows={3}/>
+                    <Textarea
+                      placeholder="このバージョンでの変更内容や理由を記述してください。"
+                      {...field}
+                      rows={3}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
             <DialogFooter className="pt-4">
-              <Button type="button" variant="outline" onClick={onClose} disabled={form.formState.isSubmitting}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onClose}
+                disabled={form.formState.isSubmitting}
+              >
                 キャンセル
               </Button>
               <Button type="submit" disabled={form.formState.isSubmitting}>

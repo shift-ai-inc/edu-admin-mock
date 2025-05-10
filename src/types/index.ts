@@ -1,42 +1,33 @@
 // src/types/index.ts
 export * from './billing';
 export * from './system-admin';
+export * from './assessment';
 export * from './displayable-versions';
 
-// Import and re-export only what's needed to avoid conflicts
-// From assessment
-import { 
-  Assessment, 
-  AssessmentType, 
-  AssessmentDifficulty,
-  AssessmentVersion,
-  getAssessmentTypeName,
-  getAssessmentDifficultyName
-} from './assessment';
-
-// From survey
-import {
+// Export from survey.ts but exclude types that conflict with assessment.ts
+export type {
   Survey,
   SurveyType,
   SurveyDifficulty,
   SurveyVersion,
+  SurveyDetail,
+  AvailableSurvey,
+  SampleQuestion,
+  SurveyDeliveryTarget,
+  SurveyDelivery,
+  SurveyQuestionVersion
+} from './survey';
+export {
+  SURVEY_TYPES,
+  SURVEY_DIFFICULTIES,
   getSurveyTypeName,
-  getSurveyDifficultyName
+  getSurveyDifficultyName,
+  getMockSurveyDetail
 } from './survey';
 
-// Shared exports from assessment
-export type { Assessment };
-export type { AssessmentType };
-export type { AssessmentDifficulty };
-export type { AssessmentVersion };
-export { getAssessmentTypeName, getAssessmentDifficultyName };
+// Export from surveyDelivery.ts
+export { getSurveyDeliveryStatusInfo } from './surveyDelivery';
 
-// Shared exports from survey
-export type { Survey };
-export type { SurveyType };
-export type { SurveyDifficulty };
-export type { SurveyVersion };
-export { getSurveyTypeName, getSurveyDifficultyName };
-
-// Import and export survey definition
-export * from './survey-definition';
+export * from './user';
+export * from './company';
+export * from './group';

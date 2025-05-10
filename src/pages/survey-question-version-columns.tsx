@@ -1,5 +1,5 @@
 import { ColumnDef } from "@tanstack/react-table";
-import { QuestionVersion, getVersionStatusName, getQuestionTypeName } from "@/types/survey";
+import { SurveyQuestionVersion, getVersionStatusName, getQuestionTypeName } from "@/types/survey";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { MoreHorizontal, Eye } from "lucide-react";
@@ -14,7 +14,7 @@ import {
 import { toast } from "@/hooks/use-toast";
 
 
-const handleViewSurveyQuestionDetails = (questionVersion: QuestionVersion) => {
+const handleViewSurveyQuestionDetails = (questionVersion: SurveyQuestionVersion) => {
   toast({
     title: "サーベイ設問詳細 (プレースホルダー)",
     description: `設問ID: ${questionVersion.questionId}, Ver: ${questionVersion.versionNumber} の詳細ページへ遷移します。`,
@@ -23,7 +23,7 @@ const handleViewSurveyQuestionDetails = (questionVersion: QuestionVersion) => {
 };
 
 
-export const surveyQuestionVersionColumns: ColumnDef<QuestionVersion>[] = [
+export const surveyQuestionVersionColumns: ColumnDef<SurveyQuestionVersion>[] = [
   {
     accessorKey: "questionData.text",
     header: "設問内容",

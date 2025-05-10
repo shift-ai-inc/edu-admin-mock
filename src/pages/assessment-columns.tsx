@@ -16,7 +16,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { ArrowUpDown, MoreHorizontal, Send, Eye, Star } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { useNavigate } from 'react-router-dom'; // Import useNavigate
+import { useNavigate } from "react-router-dom"; // Import useNavigate
 
 // Placeholder for deliver assessment action
 const handleDeliverAssessment = (assessment: Assessment) => {
@@ -26,7 +26,6 @@ const handleDeliverAssessment = (assessment: Assessment) => {
   });
   console.log("Deliver assessment:", assessment.title);
 };
-
 
 export const assessmentColumns: ColumnDef<Assessment>[] = [
   {
@@ -49,7 +48,7 @@ export const assessmentColumns: ColumnDef<Assessment>[] = [
       };
 
       return (
-        <div 
+        <div
           className="flex flex-col cursor-pointer hover:underline"
           onClick={() => handleViewDetails(assessment)}
         >
@@ -82,12 +81,17 @@ export const assessmentColumns: ColumnDef<Assessment>[] = [
     ),
     cell: ({ row }) => {
       const difficulty = row.original.difficulty;
-      let badgeVariant: "default" | "secondary" | "outline" | "destructive" = "secondary";
+      let badgeVariant: "default" | "secondary" | "outline" | "destructive" =
+        "secondary";
       if (difficulty === "beginner") badgeVariant = "default";
       else if (difficulty === "intermediate") badgeVariant = "outline";
       else if (difficulty === "advanced") badgeVariant = "destructive";
-      
-      return <Badge variant={badgeVariant}>{getAssessmentDifficultyName(difficulty)}</Badge>;
+
+      return (
+        <Badge variant={badgeVariant}>
+          {getAssessmentDifficultyName(difficulty)}
+        </Badge>
+      );
     },
     filterFn: (row, id, value) => {
       return value.includes(row.getValue(id));
@@ -100,7 +104,7 @@ export const assessmentColumns: ColumnDef<Assessment>[] = [
       row.original.targetSkillLevel.map(getSkillLevelName).join(", "),
     filterFn: (row, id, value) => {
       const rowValue = row.getValue(id) as string[];
-      return rowValue.some(skill => value.includes(skill));
+      return rowValue.some((skill) => value.includes(skill));
     },
   },
   {
@@ -124,12 +128,18 @@ export const assessmentColumns: ColumnDef<Assessment>[] = [
       return (
         <div className="flex space-x-1">
           {assessment.isPopular && (
-            <Badge variant="outline" className="bg-yellow-100 text-yellow-700 border-yellow-300">
+            <Badge
+              variant="outline"
+              className="bg-yellow-100 text-yellow-700 border-yellow-300"
+            >
               <Star className="mr-1 h-3 w-3" /> 人気
             </Badge>
           )}
           {assessment.isRecommended && (
-            <Badge variant="outline" className="bg-green-100 text-green-700 border-green-300">
+            <Badge
+              variant="outline"
+              className="bg-green-100 text-green-700 border-green-300"
+            >
               <Star className="mr-1 h-3 w-3" /> 推奨
             </Badge>
           )}

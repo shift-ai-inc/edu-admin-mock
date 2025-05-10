@@ -31,28 +31,22 @@ import {
 } from '@/components/ui/select';
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from '@/hooks/use-toast';
-import { 
-  Survey, 
+import {
+  Survey,
+  SURVEY_TYPES,
+  SURVEY_DIFFICULTIES,
+  SKILL_LEVELS,
   getSurveyTypeName,
   getSurveyDifficultyName,
   getSkillLevelName
 } from '@/types/survey';
 
-import {
-  SURVEY_TYPES,
-  SURVEY_DIFFICULTIES,
-  SKILL_LEVELS,
-  SurveyType,
-  SurveyDifficulty,
-  SkillLevel
-} from '@/types/survey';
-
 const surveyFormSchema = z.object({
   title: z.string().min(3, { message: "タイトルは3文字以上で入力してください。" }),
   description: z.string().min(10, { message: "説明は10文字以上で入力してください。" }),
-  type: z.enum(["multiple-choice", "coding-test", "scenario-based", "video-submission"] as const, { required_error: "種類を選択してください。" }),
-  difficulty: z.enum(["beginner", "intermediate", "advanced", "expert"] as const, { required_error: "複雑度を選択してください。" }),
-  targetSkillLevel: z.array(z.enum(["entry", "junior", "mid-level", "senior", "lead"] as const)).min(1, { message: "対象者を1つ以上選択してください。" }),
+  type: z.enum(SURVEY_TYPES.map(type => type as string) as [string, ...string[]], { required_error: "種類を選択してください。" }),
+  difficulty: z.enum(SURVEY_DIFFICULTIES.map(diff => diff as string) as [string, ...string[]], { required_error: "複雑度を選択してください。" }),
+  targetSkillLevel: z.array(z.enum(SKILL_LEVELS.map(level => level as string) as [string, ...string[]])).min(1, { message: "対象者を1つ以上選択してください。" }),
   estimatedDurationMinutes: z.coerce
     .number({ invalid_type_error: "数値を入力してください。" })
     .int({ message: "整数を入力してください。" })

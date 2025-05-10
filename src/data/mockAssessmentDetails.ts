@@ -1,257 +1,257 @@
-import { AssessmentDetail } from '@/types/assessment';
+import { Assessment, AssessmentVersion, QuestionVersion, Question, QuestionDifficulty } from '@/types/assessment';
+import { mockAssessments } from './mockAssessments';
 
-// Mock detailed data for assessments
-export const mockAssessmentDetails: Record<string, AssessmentDetail> = {
-  'assess-001': {
-    // Basic info (matches AvailableAssessment)
-    id: 'assess-001',
-    title: 'React基礎スキル診断',
-    description: 'Reactの基本的な概念とフックに関する理解度を測定します。コンポーネント、ステート、プロップスなどが含まれます。',
-    thumbnailUrl: '/images/react-thumb.png',
-    type: 'スキル評価',
+// --- Mock Questions ---
+const mockQuestionsDb: Record<string, Question> = {
+  'q-react-1': { 
+    id: 'q-react-1', 
+    text: 'Reactの主要な特徴は何ですか？（複数選択可）', 
+    type: 'multiple-choice', 
+    options: ['仮想DOM', '双方向データバインディング', 'コンポーネントベース', 'サーバーサイドレンダリング'], 
+    correctAnswer: ['仮想DOM', 'コンポーネントベース'],
+    points: 10,
+    category: 'React基礎',
     difficulty: 'easy',
-    skillLevel: 'beginner',
-    estimatedTime: 30,
-    isPopular: true,
-    isRecommended: true,
-    tags: ['React', 'Frontend', 'JavaScript'],
-    category: 'スキル診断',
-    createdAt: '2023-10-26T10:00:00Z',
-    usageCount: 150,
-    // Detailed info
-    structureDescription: '全25問: 選択式20問、簡単なコード記述問題5問。Reactの基本概念を網羅。',
-    categories: [
-      { name: 'コンポーネントとProps', questionCount: 8 },
-      { name: 'StateとLifecycle', questionCount: 7 },
-      { name: 'Hooks (useState, useEffect)', questionCount: 6 },
-      { name: 'イベント処理', questionCount: 4 },
-    ],
-    difficultyDistribution: { easy: 15, medium: 10, hard: 0 },
-    sampleQuestions: [
-      { id: 'q1-1', text: 'Reactコンポーネント間でデータを渡すための主な仕組みは何ですか？', type: 'multiple-choice' },
-      { id: 'q1-2', text: '`useState` フックの基本的な使い方を説明してください。', type: 'text' },
-      { id: 'q1-3', text: 'クラスコンポーネントの `componentDidMount` と等価なフックは何ですか？', type: 'multiple-choice' },
-    ],
-    targetSkills: ['React基本構文', 'コンポーネント設計', '状態管理'],
-    measurableAbilities: ['Reactコード読解力', '基本的なHooksの利用能力'],
-    statistics: {
-      totalDeliveries: 150,
-      averageScore: 82.5,
-      completionRate: 96.0,
-      lastDelivered: '2024-03-15',
-    },
   },
-  'assess-002': {
-    // Basic info
-    id: 'assess-002',
-    title: 'リーダーシップ・コンピテンシー評価',
-    description: 'チームを率いる上で必要なコンピテンシー（意思決定、コミュニケーション、動機付けなど）を評価します。',
-    thumbnailUrl: '/images/leadership-thumb.png',
-    type: '360度評価',
+  'q-react-2': { 
+    id: 'q-react-2', 
+    text: 'useStateフックの目的を簡潔に説明してください。', 
+    type: 'free-text',
+    points: 15,
+    category: 'React Hooks',
     difficulty: 'medium',
-    skillLevel: 'intermediate',
-    estimatedTime: 45,
-    isPopular: false,
-    isRecommended: true,
-    tags: ['Leadership', 'Management', 'Soft Skills'],
-    category: 'コンピテンシー評価',
-    createdAt: '2023-09-15T14:30:00Z',
-    usageCount: 85,
-    // Detailed info
-    structureDescription: '5つのコンピテンシー領域、各領域6問の評価項目 (自己評価、上司評価、同僚評価、部下評価)。自由記述欄あり。',
-    categories: [
-      { name: 'ビジョン提示力', questionCount: 6 },
-      { name: 'チーム育成力', questionCount: 6 },
-      { name: '意思決定力', questionCount: 6 },
-      { name: 'コミュニケーション力', questionCount: 6 },
-      { name: '目標達成力', questionCount: 6 },
-    ],
-    difficultyDistribution: { easy: 5, medium: 20, hard: 5 }, // Difficulty might represent complexity of behavior/interpretation
-    sampleQuestions: [
-      { id: 'q2-1', text: 'チームメンバーの意見を積極的に聞き、意思決定に反映していますか？ (1-5で評価)', type: 'rating' },
-      { id: 'q2-2', text: '困難な状況でも、チームを鼓舞し、目標達成に向けて導いていますか？ (1-5で評価)', type: 'rating' },
-    ],
-    targetSkills: ['戦略的思考', '人材育成', '意思決定能力', '対人関係構築', '目標管理'],
-    measurableAbilities: ['リーダーシップ行動特性', '周囲からの信頼度', 'チームマネジメント能力'],
-    statistics: {
-      totalDeliveries: 85,
-      // Average score might not be meaningful for 360 feedback
-      completionRate: 91.0,
-      lastDelivered: '2024-02-28',
-    },
   },
-  'assess-003': {
-    // Basic info
-    id: 'assess-003',
-    title: '従業員エンゲージメントサーベイ',
-    description: '組織全体のエンゲージメントレベル、満足度、改善点を把握するための匿名サーベイです。',
-    thumbnailUrl: '/images/engagement-thumb.png',
-    type: 'エンゲージメント',
-    difficulty: 'easy', // Questions are easy, interpretation might be complex
-    skillLevel: 'all',
-    estimatedTime: 15,
-    isPopular: true,
-    isRecommended: false,
-    tags: ['HR', 'Survey', 'Engagement'],
-    category: 'エンゲージメントサーベイ',
-    createdAt: '2024-01-10T09:00:00Z',
-    usageCount: 320,
-    // Detailed info
-    structureDescription: '6つのエンゲージメントドライバーに関する30の質問項目 (5段階評価)。匿名回答形式。',
-    categories: [
-      { name: '仕事の満足度', questionCount: 5 },
-      { name: '上司との関係', questionCount: 5 },
-      { name: '同僚との関係', questionCount: 5 },
-      { name: '成長機会', questionCount: 5 },
-      { name: '会社への貢献感', questionCount: 5 },
-      { name: 'ワークライフバランス', questionCount: 5 },
-    ],
-    difficultyDistribution: { easy: 30, medium: 0, hard: 0 },
-    sampleQuestions: [
-      { id: 'q3-1', text: '現在の仕事内容にやりがいを感じていますか？ (1-5で評価)', type: 'rating' },
-      { id: 'q3-2', text: 'チーム内で意見交換が活発に行われていると感じますか？ (1-5で評価)', type: 'rating' },
-    ],
-    targetSkills: ['組織診断', '従業員満足度把握'],
-    measurableAbilities: ['チームエンゲージメントレベル', '組織課題の特定'],
-    statistics: {
-      totalDeliveries: 320,
-      completionRate: 94.5,
-      lastDelivered: '2024-03-10',
-    },
-  },
-  'assess-004': {
-    // Basic info
-    id: 'assess-004',
-    title: 'Pythonデータ分析スキルテスト',
-    description: 'Pandas, NumPy を用いた基本的なデータ処理、可視化能力をテストします。',
-    thumbnailUrl: '/images/python-data-thumb.png',
-    type: 'スキル評価',
-    difficulty: 'medium',
-    skillLevel: 'intermediate',
-    estimatedTime: 60,
-    isPopular: false,
-    isRecommended: true,
-    tags: ['Python', 'Data Science', 'Pandas'],
-    category: 'スキル診断',
-    createdAt: '2023-11-01T11:00:00Z',
-    usageCount: 110,
-    // Detailed info
-    structureDescription: '全15問: 選択式5問、データ処理問題8問、簡単な可視化問題2問。',
-    categories: [
-        { name: 'NumPy基礎', questionCount: 3 },
-        { name: 'Pandas DataFrame操作', questionCount: 6 },
-        { name: 'データクリーニング', questionCount: 4 },
-        { name: 'Matplotlib/Seaborn基礎', questionCount: 2 },
-    ],
-    difficultyDistribution: { easy: 3, medium: 9, hard: 3 },
-    sampleQuestions: [
-        { id: 'q4-1', text: 'Pandas DataFrameで特定の列を選択する方法は？', type: 'multiple-choice' },
-        { id: 'q4-2', text: '与えられたDataFrameの欠損値を平均値で補完するコードを記述してください。', type: 'text' },
-        { id: 'q4-3', text: 'Matplotlibを使用して簡単な棒グラフを作成するコードを示してください。', type: 'text' },
-    ],
-    targetSkills: ['データハンドリング(Pandas)', '数値計算(NumPy)', '基本データ可視化'],
-    measurableAbilities: ['Pythonによるデータ処理能力', 'データ分析の基礎知識'],
-    statistics: {
-        totalDeliveries: 110,
-        averageScore: 75.8,
-        completionRate: 92.1,
-        lastDelivered: '2024-03-01',
-    },
-  },
-   'assess-005': {
-    // Basic info
-    id: 'assess-005',
-    title: 'プロジェクトマネジメント知識確認',
-    description: 'プロジェクトの計画、実行、監視、終結に関する基本的な知識を問います。',
-    thumbnailUrl: '/images/pm-thumb.png',
-    type: 'スキル評価',
+  'q-react-3': { 
+    id: 'q-react-3', 
+    text: 'useEffectフックの第二引数に空の配列を渡すと、副作用関数はいつ実行されますか？', 
+    type: 'single-choice', 
+    options: ['毎レンダリング実行', '初回レンダリング時のみ実行', '依存関係変更時のみ実行'], 
+    correctAnswer: '初回レンダリング時のみ実行',
+    points: 10,
+    category: 'React Hooks',
     difficulty: 'easy',
-    skillLevel: 'beginner',
-    estimatedTime: 25,
-    isPopular: true,
-    isRecommended: false,
-    tags: ['Project Management', 'PMBOK', 'Agile'],
-    category: 'その他',
-    createdAt: '2024-02-20T16:00:00Z',
-    usageCount: 205,
-    // Detailed info
-    structureDescription: 'シナリオベースの選択式問題30問。PMBOKガイドの主要知識エリアをカバー。',
-     categories: [
-      { name: '統合マネジメント', questionCount: 5 },
-      { name: 'スコープ管理', questionCount: 5 },
-      { name: 'スケジュール管理', questionCount: 6 },
-      { name: 'コスト管理', questionCount: 4 },
-      { name: 'リスク管理', questionCount: 5 },
-      { name: 'コミュニケーション管理', questionCount: 5 },
-    ],
-    difficultyDistribution: { easy: 20, medium: 10, hard: 0 },
-    sampleQuestions: [
-      { id: 'q5-1', text: 'プロジェクトのスコープクリープを防ぐために最も重要な活動は？', type: 'multiple-choice' },
-      { id: 'q5-2', text: 'WBS (Work Breakdown Structure) を作成する主な目的は何ですか？', type: 'multiple-choice' },
-    ],
-    targetSkills: ['プロジェクト計画立案', 'リスク特定', '進捗監視', 'ステークホルダー管理'],
-    measurableAbilities: ['基本的なプロジェクトマネジメント知識', 'PM用語の理解'],
-    statistics: {
-      totalDeliveries: 205,
-      averageScore: 88.2,
-      completionRate: 97.5,
-      lastDelivered: '2024-03-18',
-    },
   },
-   'assess-006': {
-    // Basic info
-    id: 'assess-006',
-    title: '高度なTypeScript型システム理解度テスト',
-    description: 'ジェネリクス、条件型、Mapped Typesなど、TypeScriptの高度な型機能に関する理解を深掘りします。',
-    thumbnailUrl: '/images/ts-advanced-thumb.png',
-    type: 'スキル評価',
+  'q-js-algo-1': { 
+    id: 'q-js-algo-1', 
+    text: '与えられた数値配列を逆順にするJavaScriptの関数を記述してください。', 
+    type: 'code',
+    points: 20,
+    category: 'JavaScriptアルゴリズム',
+    difficulty: 'medium',
+  },
+  'q-js-algo-2': { 
+    id: 'q-js-algo-2', 
+    text: 'フィボナッチ数列のn番目の値を返す再帰関数を記述してください。', 
+    type: 'code',
+    points: 25,
+    category: 'JavaScriptアルゴリズム',
     difficulty: 'hard',
-    skillLevel: 'advanced',
-    estimatedTime: 75,
-    isPopular: false,
-    isRecommended: true,
-    tags: ['TypeScript', 'Frontend', 'Backend', 'Type System'],
-    category: 'スキル診断',
-    createdAt: '2023-12-05T13:15:00Z',
-    usageCount: 45,
-    // Detailed info
-    structureDescription: '全12問: 選択式4問、型定義問題6問、型推論に関する考察問題2問。',
-     categories: [
-      { name: 'ジェネリクス', questionCount: 4 },
-      { name: '条件型と推論 (infer)', questionCount: 3 },
-      { name: 'Mapped Types と Utility Types', questionCount: 3 },
-      { name: '高度な型ガードと型安全性', questionCount: 2 },
-    ],
-    difficultyDistribution: { easy: 0, medium: 4, hard: 8 },
-    sampleQuestions: [
-      { id: 'q6-1', text: '`keyof` と `typeof` 演算子の違いを説明し、具体的な使用例を示してください。', type: 'text' },
-      { id: 'q6-2', text: '与えられたインターフェースのすべてのプロパティをオプショナルにするMapped Typeを定義してください。', type: 'text' },
-      { id: 'q6-3', text: '条件型を使用して、特定の型がPromiseであるかどうかを判定する型 `IsPromise<T>` を定義してください。', type: 'text' },
-    ],
-    targetSkills: ['高度な型定義', '型安全性向上', 'ジェネリックプログラミング', '型推論メカニズム理解'],
-    measurableAbilities: ['複雑な型システムの設計・読解能力', 'TypeScriptの静的解析能力の活用'],
-    statistics: {
-      totalDeliveries: 45,
-      averageScore: 68.9,
-      completionRate: 89.0,
-      lastDelivered: '2024-01-25',
-    },
   },
 };
 
-// Function to simulate fetching details (replace with actual API call later)
-export const getAssessmentDetail = async (id: string): Promise<AssessmentDetail | null> => {
-  console.log(`Fetching details for assessment ID: ${id}`);
-  // Simulate network delay
-  await new Promise(resolve => setTimeout(resolve, 150)); // Slightly longer delay for detail fetch
-  const detail = mockAssessmentDetails[id];
-  if (!detail) {
-    console.error(`Assessment detail not found for ID: ${id}`);
-    return null;
+// --- Mock Question Versions ---
+const mockQuestionVersionsDb: Record<string, QuestionVersion[]> = {
+  'q-react-1': [
+    { id: 'qv-react-1-v1', questionId: 'q-react-1', versionNumber: 1, questionData: mockQuestionsDb['q-react-1'], createdAt: new Date('2023-01-10T10:00:00Z'), createdBy: 'admin1', status: 'published', changeLog: '初期バージョン作成' },
+    { 
+      id: 'qv-react-1-v2', 
+      questionId: 'q-react-1', 
+      versionNumber: 2, 
+      questionData: { ...mockQuestionsDb['q-react-1'], text: 'Reactの主要な特徴を2つ選択してください。', options: ['仮想DOM', '双方向データバインディング', 'コンポーネントベースアーキテクチャ', 'サーバーサイドレンダリング'], points: 12 }, 
+      createdAt: new Date('2023-01-12T11:00:00Z'), 
+      createdBy: 'admin2', 
+      status: 'published', 
+      changeLog: '設問文修正、選択肢「コンポーネントベース」を「コンポーネントベースアーキテクチャ」に修正、配点を12に変更' 
+    },
+  ],
+  'q-react-2': [
+    { id: 'qv-react-2-v1', questionId: 'q-react-2', versionNumber: 1, questionData: mockQuestionsDb['q-react-2'], createdAt: new Date('2023-01-10T10:05:00Z'), createdBy: 'admin1', status: 'published', changeLog: '初期バージョン作成' },
+  ],
+  'q-react-3': [
+    { id: 'qv-react-3-v1', questionId: 'q-react-3', versionNumber: 1, questionData: mockQuestionsDb['q-react-3'], createdAt: new Date('2023-01-10T10:10:00Z'), createdBy: 'admin1', status: 'published', changeLog: '初期バージョン作成' },
+  ],
+  'q-js-algo-1': [
+    { id: 'qv-js-algo-1-v1', questionId: 'q-js-algo-1', versionNumber: 1, questionData: mockQuestionsDb['q-js-algo-1'], createdAt: new Date('2023-02-05T14:00:00Z'), createdBy: 'admin3', status: 'published', changeLog: '初期バージョン作成' },
+  ],
+  'q-js-algo-2': [
+    { id: 'qv-js-algo-2-v1', questionId: 'q-js-algo-2', versionNumber: 1, questionData: mockQuestionsDb['q-js-algo-2'], createdAt: new Date('2023-02-05T14:05:00Z'), createdBy: 'admin3', status: 'published', changeLog: '初期バージョン作成' },
+  ],
+};
+
+
+// --- Mock Assessment Versions ---
+export const mockAssessmentVersions: Record<string, AssessmentVersion[]> = {
+  'asm-001': [ // React基礎理解度テスト
+    {
+      id: 'asmv-001-v1',
+      assessmentId: 'asm-001',
+      versionNumber: 1,
+      description: '初期リリースバージョン。基本的なReactの概念をカバー。',
+      questions: [mockQuestionVersionsDb['q-react-1'][0], mockQuestionVersionsDb['q-react-2'][0]],
+      questionCount: 2,
+      createdAt: new Date('2023-01-15T09:00:00Z'),
+      createdBy: 'admin1',
+      status: 'archived',
+      publishedAt: new Date('2023-01-15T09:00:00Z'),
+    },
+    {
+      id: 'asmv-001-v2',
+      assessmentId: 'asm-001',
+      versionNumber: 2,
+      description: '質問内容を更新し、useEffectに関する質問を追加。',
+      questions: [mockQuestionVersionsDb['q-react-1'][1], mockQuestionVersionsDb['q-react-2'][0], mockQuestionVersionsDb['q-react-3'][0]],
+      questionCount: 3,
+      createdAt: new Date('2023-01-20T14:30:00Z'),
+      createdBy: 'admin2',
+      status: 'published',
+      publishedAt: new Date('2023-01-20T15:00:00Z'),
+    },
+  ],
+  'asm-002': [ // JavaScriptアルゴリズムチャレンジ
+    {
+      id: 'asmv-002-v1',
+      assessmentId: 'asm-002',
+      versionNumber: 1,
+      description: 'アルゴリズム問題の初期セット。',
+      questions: [mockQuestionVersionsDb['q-js-algo-1'][0], mockQuestionVersionsDb['q-js-algo-2'][0]],
+      questionCount: 2,
+      createdAt: new Date('2023-02-10T11:00:00Z'),
+      createdBy: 'admin3',
+      status: 'published',
+      publishedAt: new Date('2023-02-10T11:00:00Z'),
+    },
+  ],
+  'asm-003': [ // 空のバージョンのアセスメント（テスト用）
+    {
+      id: 'asmv-003-v1',
+      assessmentId: 'asm-003',
+      versionNumber: 1,
+      description: '設問がまだないバージョン。',
+      questions: [],
+      questionCount: 0,
+      createdAt: new Date('2023-03-01T10:00:00Z'),
+      createdBy: 'admin4',
+      status: 'draft',
+    }
+  ]
+};
+
+// Function to get full assessment details including versions
+export const getAssessmentWithVersions = (assessmentId: string): (Assessment & { versions: AssessmentVersion[] }) | undefined => {
+  const baseAssessment = mockAssessments.find(asm => asm.id === assessmentId);
+  if (!baseAssessment) return undefined;
+
+  return {
+    ...baseAssessment,
+    versions: mockAssessmentVersions[assessmentId] ? [...mockAssessmentVersions[assessmentId]].sort((a, b) => b.versionNumber - a.versionNumber) : [],
+  };
+};
+
+// Function to get a specific assessment version with its full question version details
+export const getAssessmentVersionDetails = (assessmentId: string, versionId: string): AssessmentVersion | undefined => {
+  const versions = mockAssessmentVersions[assessmentId];
+  if (!versions) return undefined;
+  const version = versions.find(v => v.id === versionId);
+  return version;
+};
+
+// Function to get a specific question version by its ID
+export const getQuestionVersionById = (questionVersionId: string): QuestionVersion | undefined => {
+  for (const questionId in mockQuestionVersionsDb) {
+    const versions = mockQuestionVersionsDb[questionId];
+    const foundVersion = versions.find(qv => qv.id === questionVersionId);
+    if (foundVersion) {
+      return { ...foundVersion }; // Return a copy
+    }
   }
-  // Ensure basic properties match if they exist in both (though they should)
-  // This merge isn't strictly necessary if mockAssessmentDetails is comprehensive
-  // const baseInfo = mockAvailableAssessments.find(a => a.id === id);
-  // return baseInfo ? { ...baseInfo, ...detail } : detail;
-  return detail;
+  return undefined;
+};
+
+// Function to add a new assessment version
+export const addMockAssessmentVersion = (assessmentId: string, description: string): AssessmentVersion | null => {
+  if (!mockAssessmentVersions[assessmentId]) {
+    mockAssessmentVersions[assessmentId] = [];
+  }
+
+  const existingVersions = mockAssessmentVersions[assessmentId];
+  const latestVersionNumber = existingVersions.length > 0 
+    ? Math.max(...existingVersions.map(v => v.versionNumber)) 
+    : 0;
+  const newVersionNumber = latestVersionNumber + 1;
+
+  const newVersion: AssessmentVersion = {
+    id: `asmv-${assessmentId}-v${newVersionNumber}-${Date.now()}`, // Unique ID
+    assessmentId: assessmentId,
+    versionNumber: newVersionNumber,
+    description: description,
+    questions: [], // New versions start with no questions
+    questionCount: 0,
+    createdAt: new Date(),
+    createdBy: 'current-user-mock', // Mock user, replace with actual user if available
+    status: 'draft',
+  };
+
+  mockAssessmentVersions[assessmentId].push(newVersion);
+  
+  const assessmentIndex = mockAssessments.findIndex(a => a.id === assessmentId);
+  if (assessmentIndex !== -1) {
+    mockAssessments[assessmentIndex].updatedAt = new Date();
+  }
+  
+  return { ...newVersion }; // Return a copy
+};
+
+// Function to update a specific question version
+export const updateMockQuestionVersion = (
+  questionVersionId: string,
+  newData: {
+    questionData: {
+      text: string;
+      category: string;
+      points: number;
+      difficulty: QuestionDifficulty;
+    };
+    changeLog: string;
+  }
+): QuestionVersion | null => {
+  for (const qId in mockQuestionVersionsDb) {
+    const versions = mockQuestionVersionsDb[qId];
+    const versionIndex = versions.findIndex(qv => qv.id === questionVersionId);
+    if (versionIndex !== -1) {
+      const originalVersion = versions[versionIndex];
+      
+      const updatedQuestionData = {
+        ...originalVersion.questionData,
+        text: newData.questionData.text,
+        category: newData.questionData.category,
+        points: newData.questionData.points,
+        difficulty: newData.questionData.difficulty,
+      };
+      
+      const updatedVersion: QuestionVersion = {
+        ...originalVersion,
+        questionData: updatedQuestionData,
+        changeLog: newData.changeLog,
+        // Consider adding/updating an `updatedAt` field on QuestionVersion if needed
+        // For now, `createdAt` remains the creation time of this version,
+        // and `changeLog` tracks modifications to this specific version.
+      };
+      
+      versions[versionIndex] = updatedVersion;
+
+      // Also update any AssessmentVersion that includes this QuestionVersion
+      Object.values(mockAssessmentVersions).forEach(assessmentVersionList => {
+        assessmentVersionList.forEach(av => {
+          const qvIndex = av.questions.findIndex(q => q.id === questionVersionId);
+          if (qvIndex !== -1) {
+            av.questions[qvIndex] = { ...updatedVersion }; // Update with a copy
+          }
+        });
+      });
+      
+      return { ...updatedVersion }; // Return a copy
+    }
+  }
+  console.error(`QuestionVersion with id ${questionVersionId} not found for update.`);
+  return null;
 };
