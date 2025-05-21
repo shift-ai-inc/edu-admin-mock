@@ -75,7 +75,7 @@ function Layout({ navItems }: LayoutProps) {
     <div className="flex flex-col h-full bg-white text-gray-700">
       <div className="p-4 border-b border-gray-200">
         <h1 className="text-xl font-semibold text-gray-900">
-          SHIFT AI管理ポータル
+          システム管理者
         </h1>
       </div>
       <nav className="flex-grow p-2 space-y-1 overflow-y-auto">

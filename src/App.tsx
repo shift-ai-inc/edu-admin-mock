@@ -4,16 +4,15 @@ import {
   Route,
   Navigate,
   useNavigate,
-} from "react-router-dom"; // Added useNavigate
+} from "react-router-dom"; 
 import {
-  LayoutDashboard,
   Building,
   FileText,
   Settings as SettingsIcon,
   UserCog,
   ShieldCheck,
   ClipboardList,
-  Vote,
+  // ShieldAlert, // Removed as Permission Management is removed
 } from "lucide-react";
 
 import Layout from "./components/Layout";
@@ -29,7 +28,7 @@ import UpdateCompany from "./pages/UpdateCompany";
 import Contracts from "./pages/Contracts";
 import ContractDetail from "./pages/ContractDetail";
 import SettingsPage from "./pages/Settings";
-import Login from "./pages/Login"; // Re-imported Login page
+import Login from "./pages/Login"; 
 import CompanyAdmins from "./pages/CompanyAdmins";
 import AddCompanyAdmin from "./pages/AddCompanyAdmin";
 import CompanyAdminDetail from "./pages/CompanyAdminDetail";
@@ -40,6 +39,7 @@ import AssessmentQuestionDetail from "./pages/AssessmentQuestionDetail";
 import SurveyList from "./pages/SurveyList";
 import SurveyDetail from "./pages/SurveyDetail";
 import SurveyQuestionDetail from "./pages/SurveyQuestionDetail";
+// import PermissionLogList from "./pages/PermissionLogList"; // Removed as Permission Management is removed
 
 interface NavItem {
   to: string;
@@ -48,28 +48,17 @@ interface NavItem {
   children?: NavItem[];
 }
 
-interface LayoutProps {
-  navItems: NavItem[];
-  isAuthenticated: boolean; // Add isAuthenticated prop
-  onLogout: () => void;
-}
-
 const navItems: NavItem[] = [
-  { to: "/", label: "ダッシュボード", icon: LayoutDashboard },
   {
     to: "/assessments",
     label: "アセスメント",
     icon: ClipboardList,
   },
-  {
-    to: "/surveys",
-    label: "サーベイ",
-    icon: Vote,
-  },
   { to: "/companies", label: "企業一覧", icon: Building },
   { to: "/company-admins", label: "企業管理者", icon: UserCog },
   { to: "/contracts", label: "契約管理", icon: FileText },
   { to: "/system-admins", label: "システム管理者管理", icon: ShieldCheck },
+  // { to: "/permission-logs", label: "権限管理", icon: ShieldAlert }, // Removed Permission Management
   { to: "/settings", label: "設定", icon: SettingsIcon },
 ];
 
@@ -77,34 +66,30 @@ function AppContent() {
   const navigate = useNavigate();
 
   const handleLoginSuccess = () => {
-    // In a real app, you might set auth tokens here
     navigate("/");
   };
 
-  const handleLogout = () => {
-    // In a real app, you might clear auth tokens here
-    navigate("/auth");
-  };
+  // const handleLogout = () => { // Logout handled by clearing auth state, not direct navigation from App
+  //   navigate("/auth");
+  // };
 
   return (
     <Routes>
-      {/* Auth route is outside the main Layout */}
       <Route
         path="/auth"
         element={<Login onLoginSuccess={handleLoginSuccess} />}
       />
-
-      {/* Main application routes wrapped by Layout */}
       <Route
         element={
           <Layout
             navItems={navItems}
-            isAuthenticated={true}
-            onLogout={handleLogout}
           />
         }
       >
-        <Route path="/" element={<Dashboard />} />
+        <Route path="/" element={<Navigate to="/assessments" replace />} />
+        
+        <Route path="/dashboard-placeholder" element={<Dashboard />} />
+
 
         <Route path="/system-admins" element={<SystemAdminManagement />} />
         <Route path="/system-admins/add" element={<AddSystemAdmin />} />
@@ -153,15 +138,14 @@ function AppContent() {
           path="/surveys/questions/:questionVersionId"
           element={<SurveyQuestionDetail />}
         />
+        
+        {/* <Route path="/permission-logs" element={<PermissionLogList />} /> */} {/* Removed route for Permission Management */}
 
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/profile" element={<Profile />} />
-
-        {/* Catch-all for routes within the layout, redirect to dashboard */}
-        {/* Ensure this is the last route within the Layout-wrapped routes */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        
+        <Route path="*" element={<Navigate to="/assessments" replace />} />
       </Route>
-      {/* A general catch-all if no routes match (e.g. if /auth is mistyped), could redirect to /auth or / */}
       <Route path="*" element={<Navigate to="/auth" replace />} />
     </Routes>
   );
