@@ -13,6 +13,7 @@ import {
   ShieldCheck,
   ClipboardList,
   // ShieldAlert, // Removed as Permission Management is removed
+  Info, 
 } from "lucide-react";
 
 import Layout from "./components/Layout";
@@ -29,7 +30,7 @@ import Contracts from "./pages/Contracts";
 import ContractDetail from "./pages/ContractDetail";
 import SettingsPage from "./pages/Settings";
 import Login from "./pages/Login"; 
-import CompanyAdmins from "./pages/CompanyAdmins";
+import CompanyAdminList from "./pages/CompanyAdminList"; // Renamed import for clarity
 import AddCompanyAdmin from "./pages/AddCompanyAdmin";
 import CompanyAdminDetail from "./pages/CompanyAdminDetail";
 import Profile from "./pages/Profile";
@@ -39,7 +40,7 @@ import AssessmentQuestionDetail from "./pages/AssessmentQuestionDetail";
 import SurveyList from "./pages/SurveyList";
 import SurveyDetail from "./pages/SurveyDetail";
 import SurveyQuestionDetail from "./pages/SurveyQuestionDetail";
-// import PermissionLogList from "./pages/PermissionLogList"; // Removed as Permission Management is removed
+import CompanyInfo from "./pages/CompanyInfo"; 
 
 interface NavItem {
   to: string;
@@ -55,11 +56,11 @@ const navItems: NavItem[] = [
     icon: ClipboardList,
   },
   { to: "/companies", label: "企業一覧", icon: Building },
-  { to: "/company-admins", label: "企業管理者", icon: UserCog },
+  { to: "/company-admins", label: "企業管理者", icon: UserCog }, // Route for CompanyAdminList
   { to: "/contracts", label: "契約管理", icon: FileText },
   { to: "/system-admins", label: "システム管理者管理", icon: ShieldCheck },
-  // { to: "/permission-logs", label: "権限管理", icon: ShieldAlert }, // Removed Permission Management
   { to: "/settings", label: "設定", icon: SettingsIcon },
+  // { to: "/company-info", label: "企業情報(テスト)", icon: Info }, // Test route for CompanyInfo, can be removed if not primary
 ];
 
 function AppContent() {
@@ -68,10 +69,6 @@ function AppContent() {
   const handleLoginSuccess = () => {
     navigate("/");
   };
-
-  // const handleLogout = () => { // Logout handled by clearing auth state, not direct navigation from App
-  //   navigate("/auth");
-  // };
 
   return (
     <Routes>
@@ -90,7 +87,6 @@ function AppContent() {
         
         <Route path="/dashboard-placeholder" element={<Dashboard />} />
 
-
         <Route path="/system-admins" element={<SystemAdminManagement />} />
         <Route path="/system-admins/add" element={<AddSystemAdmin />} />
         <Route
@@ -108,13 +104,18 @@ function AppContent() {
           path="/companies/update/:companyId"
           element={<UpdateCompany />}
         />
+        {/* Optional: Keep if CompanyInfo is a distinct page, otherwise remove if UpdateCompany covers it */}
+        <Route path="/company-info/:companyId" element={<CompanyInfo />} /> 
 
-        <Route path="/company-admins" element={<CompanyAdmins />} />
+
+        {/* Company Administrator Routes */}
+        <Route path="/company-admins" element={<CompanyAdminList />} />
         <Route path="/company-admins/add" element={<AddCompanyAdmin />} />
         <Route
           path="/company-admins/detail/:adminId"
           element={<CompanyAdminDetail />}
         />
+        {/* Note: No separate /company-admins/edit/:adminId route as editing is handled in CompanyAdminDetail dialog */}
 
         <Route path="/contracts" element={<Contracts />} />
         <Route
@@ -139,8 +140,6 @@ function AppContent() {
           element={<SurveyQuestionDetail />}
         />
         
-        {/* <Route path="/permission-logs" element={<PermissionLogList />} /> */} {/* Removed route for Permission Management */}
-
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/profile" element={<Profile />} />
         

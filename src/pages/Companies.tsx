@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom"; // Link removed as it's no longer used for navigation here
+import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -9,13 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+// Select for status filter is removed as status is not in the shared mock data
 import {
   Pagination,
   PaginationContent,
@@ -33,44 +27,15 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"; // Import Dialog components
-import { AddCompanyForm } from "@/components/forms/AddCompanyForm"; // Import the new form component
+} from "@/components/ui/dialog";
+import { AddCompanyForm } from "@/components/forms/AddCompanyForm";
 import { Search, PlusCircle, ArrowUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { toast } from "@/hooks/use-toast"; // Import toast for potential parent-level notifications
+import { toast } from "@/hooks/use-toast";
+import { mockCompanies } from '@/data/mockCompanies'; // Import shared mockCompanies
+import type { Company } from '@/types/company'; // Import Company type
 
-// Simplified mock data - removed plan, startDate, endDate, users, maxUsers
-const mockCompanies = [
-  { id: 1, name: "株式会社テクノロジー", adminCount: 5, status: "アクティブ" },
-  { id: 2, name: "グローバル商事", adminCount: 20, status: "アクティブ" },
-  { id: 3, name: "未来建設", adminCount: 10, status: "休止中" },
-  { id: 4, name: "エコソリューションズ", adminCount: 3, status: "アクティブ" },
-  { id: 5, name: "デジタルメディア", adminCount: 8, status: "審査中" },
-  {
-    id: 6,
-    name: "ヘルステック・イノベーションズ",
-    adminCount: 7,
-    status: "アクティブ",
-  },
-  { id: 7, name: "スマート物流", adminCount: 12, status: "アクティブ" },
-  {
-    id: 8,
-    name: "クリエイティブデザイン",
-    adminCount: 4,
-    status: "アクティブ",
-  },
-  { id: 9, name: "フードサービス・ジャパン", adminCount: 15, status: "休止中" },
-  { id: 10, name: "教育ソリューションズ", adminCount: 9, status: "アクティブ" },
-  { id: 11, name: "リージョナルバンク", adminCount: 6, status: "審査中" },
-  {
-    id: 12,
-    name: "アドバンスト・マニュファクチャリング",
-    adminCount: 25,
-    status: "アクティブ",
-  },
-];
-
-type SortKey = "name" | "adminCount" | "status" | null;
+type SortKey = "name" | "employeeCount" | null; // Updated SortKey
 type SortDirection = "asc" | "desc";
 
 const ITEMS_PER_PAGE = 5;
@@ -78,35 +43,30 @@ const ITEMS_PER_PAGE = 5;
 export default function Companies() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
-  const [sortKey, setSortKey] = useState<SortKey>(null);
+  const [sortKey, setSortKey] = useState<SortKey>("name"); // Default sort by name
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  // statusFilter is removed
   const [currentPage, setCurrentPage] = useState(1);
-  const [isAddCompanyModalOpen, setIsAddCompanyModalOpen] = useState(false); // State for modal
+  const [isAddCompanyModalOpen, setIsAddCompanyModalOpen] = useState(false);
 
   // --- Filtering and Sorting Logic ---
   const filteredAndSortedCompanies = useMemo(() => {
-    const filtered = mockCompanies.filter((company) => {
-      if (statusFilter !== "all" && company.status !== statusFilter) {
-        return false;
-      }
-      if (searchTerm) {
-        const lowerSearchTerm = searchTerm.toLowerCase();
-        return (
-          company.name.toLowerCase().includes(lowerSearchTerm) ||
-          company.status.toLowerCase().includes(lowerSearchTerm)
-        );
-      }
-      return true;
-    });
+    let filtered = [...mockCompanies]; // Use the imported mockCompanies
+
+    if (searchTerm) {
+      const lowerSearchTerm = searchTerm.toLowerCase();
+      filtered = filtered.filter((company) =>
+        company.name.toLowerCase().includes(lowerSearchTerm)
+      );
+    }
 
     if (sortKey) {
       filtered.sort((a, b) => {
         const aValue = a[sortKey];
         const bValue = b[sortKey];
 
-        if (typeof aValue === "number" && typeof bValue === "number") {
-          return sortDirection === "asc" ? aValue - bValue : bValue - aValue;
+        if (sortKey === "employeeCount") {
+          return sortDirection === "asc" ? (aValue ?? 0) - (bValue ?? 0) : (bValue ?? 0) - (aValue ?? 0);
         }
         if (typeof aValue === "string" && typeof bValue === "string") {
           return sortDirection === "asc"
@@ -118,7 +78,7 @@ export default function Companies() {
     }
 
     return filtered;
-  }, [searchTerm, sortKey, sortDirection, statusFilter]);
+  }, [searchTerm, sortKey, sortDirection]);
 
   // --- Pagination Logic ---
   const totalPages = Math.ceil(
@@ -146,10 +106,7 @@ export default function Companies() {
     setCurrentPage(1);
   };
 
-  const handleStatusFilterChange = (value: string) => {
-    setStatusFilter(value);
-    setCurrentPage(1);
-  };
+  // handleStatusFilterChange is removed
 
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
@@ -157,34 +114,27 @@ export default function Companies() {
     }
   };
 
-  const handleRowClick = (companyId: number) => {
+  // Updated to use string companyId from the shared mock data
+  const handleRowClick = (companyId: string) => {
     navigate(`/companies/update/${companyId}`);
   };
 
   const handleAddCompanySuccess = () => {
     setIsAddCompanyModalOpen(false);
-    // TODO: Implement logic to refresh the company list from the backend
-    // For now, mockCompanies is static, so a visual refresh isn't automatic.
-    // You might re-fetch data or update local state if managing data client-side.
+    // This will now reflect changes if AddCompanyForm modifies the shared mockCompanies array
+    // or if a re-fetch mechanism were in place.
+    // For now, we rely on mockCompanies being potentially updated by AddCompanyForm if it were to do so.
+    // A more robust solution would involve state management or re-fetching.
     toast({
       title: "企業が正常に追加されました。",
-      description: "企業リストが更新されました（モック）。", // Placeholder
+      description: "企業リストが更新されました。",
     });
+     // Force a re-render by updating a dummy state or re-calculating sorted/filtered data
+    setSearchTerm(st => st); // Simple way to trigger re-evaluation of memos
+    setCurrentPage(1); // Reset to first page
   };
 
-  // --- Helper Functions ---
-  const getStatusBadgeClass = (status: string) => {
-    switch (status) {
-      case "アクティブ":
-        return "bg-green-100 text-green-800";
-      case "休止中":
-        return "bg-red-100 text-red-800";
-      case "審査中":
-        return "bg-yellow-100 text-yellow-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
+  // getStatusBadgeClass is removed
 
   // --- Render ---
   return (
@@ -193,31 +143,18 @@ export default function Companies() {
         <CardHeader>
           <CardTitle>企業一覧</CardTitle>
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mt-4">
-            {/* Search and Filters */}
+            {/* Search */}
             <div className="flex flex-wrap gap-2 items-center w-full md:w-auto">
               <div className="relative flex-grow md:flex-grow-0">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
                 <Input
-                  placeholder="企業名などで検索..."
+                  placeholder="企業名で検索..." // Updated placeholder
                   value={searchTerm}
                   onChange={handleSearchChange}
                   className="pl-9 w-full md:w-[250px] lg:w-[300px]"
                 />
               </div>
-              <Select
-                value={statusFilter}
-                onValueChange={handleStatusFilterChange}
-              >
-                <SelectTrigger className="w-full md:w-[150px]">
-                  <SelectValue placeholder="ステータス" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">全ステータス</SelectItem>
-                  <SelectItem value="アクティブ">アクティブ</SelectItem>
-                  <SelectItem value="休止中">休止中</SelectItem>
-                  <SelectItem value="審査中">審査中</SelectItem>
-                </SelectContent>
-              </Select>
+              {/* Status Select removed */}
             </div>
             {/* Add Company Button with Modal */}
             <Dialog open={isAddCompanyModalOpen} onOpenChange={setIsAddCompanyModalOpen}>
@@ -227,11 +164,18 @@ export default function Companies() {
                   新規企業を追加
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-2xl"> {/* Adjusted max-width for better form layout */}
+              <DialogContent className="sm:max-w-2xl">
                 <DialogHeader>
                   <DialogTitle>新規企業アカウント作成</DialogTitle>
                 </DialogHeader>
                 <div className="pt-4">
+                  {/* 
+                    Pass a callback to AddCompanyForm if it needs to inform this parent 
+                    about new data. For mock data, AddCompanyForm would need to directly 
+                    mutate the imported mockCompanies array or use a shared state.
+                    For simplicity, handleAddCompanySuccess now just shows a toast.
+                    A real app would refetch or update a global store.
+                  */}
                   <AddCompanyForm onSuccess={handleAddCompanySuccess} />
                 </div>
               </DialogContent>
@@ -257,34 +201,24 @@ export default function Companies() {
                   </TableHead>
                   <TableHead
                     className="cursor-pointer hover:bg-gray-50 text-right"
-                    onClick={() => handleSort("adminCount")}
+                    onClick={() => handleSort("employeeCount")}
                   >
-                    管理者数{" "}
+                    従業員数{" "}
                     <ArrowUpDown
                       className={`inline-block ml-1 h-3 w-3 ${
-                        sortKey === "adminCount" ? "text-gray-900" : "text-gray-400"
+                        sortKey === "employeeCount" ? "text-gray-900" : "text-gray-400"
                       }`}
                     />
                   </TableHead>
-                  <TableHead
-                    className="cursor-pointer hover:bg-gray-50"
-                    onClick={() => handleSort("status")}
-                  >
-                    ステータス{" "}
-                    <ArrowUpDown
-                      className={`inline-block ml-1 h-3 w-3 ${
-                        sortKey === "status" ? "text-gray-900" : "text-gray-400"
-                      }`}
-                    />
-                  </TableHead>
+                  {/* Status column removed */}
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {paginatedCompanies.length > 0 ? (
-                  paginatedCompanies.map((company) => (
+                  paginatedCompanies.map((company: Company) => ( // Ensure company is typed
                     <TableRow
                       key={company.id}
-                      onClick={() => handleRowClick(company.id)}
+                      onClick={() => handleRowClick(company.id)} // company.id is now string
                       className={cn(
                         "cursor-pointer",
                         "hover:bg-gray-50"
@@ -292,23 +226,15 @@ export default function Companies() {
                     >
                       <TableCell className="font-medium">{company.name}</TableCell>
                       <TableCell className="text-right">
-                        {company.adminCount.toLocaleString()}
+                        {company.employeeCount?.toLocaleString() ?? '-'} 
                       </TableCell>
-                      <TableCell>
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadgeClass(
-                            company.status
-                          )}`}
-                        >
-                          {company.status}
-                        </span>
-                      </TableCell>
+                      {/* Status cell removed */}
                     </TableRow>
                   ))
                 ) : (
                   <TableRow>
                     <TableCell
-                      colSpan={3}
+                      colSpan={2} // Updated colSpan
                       className="h-24 text-center text-gray-500"
                     >
                       該当する企業が見つかりません。
@@ -339,33 +265,13 @@ export default function Companies() {
 
                   {[...Array(totalPages)].map((_, i) => {
                     const page = i + 1;
-                    const showPage =
+                    // Simplified pagination display logic for brevity
+                    if (
                       page === 1 ||
                       page === totalPages ||
-                      Math.abs(page - currentPage) <= 1;
-                    const showEllipsis =
-                      Math.abs(page - currentPage) === 2 && totalPages > 5;
-
-                    if (showEllipsis) {
-                      const key =
-                        page < currentPage
-                          ? `ellipsis-start-${page}`
-                          : `ellipsis-end-${page}`;
-                      const existingEllipsis = document.querySelector(
-                        `[data-ellipsis-key="${key}"]`
-                      );
-                      if (!existingEllipsis) {
-                        return (
-                          <PaginationItem key={key} data-ellipsis-key={key}>
-                            <PaginationEllipsis />
-                          </PaginationItem>
-                        );
-                      }
-                      return null;
-                    }
-
-                    if (showPage) {
-                      return (
+                      (page >= currentPage - 1 && page <= currentPage + 1)
+                    ) {
+                       return (
                         <PaginationItem key={page}>
                           <PaginationLink
                             href="#"
@@ -379,6 +285,19 @@ export default function Companies() {
                           </PaginationLink>
                         </PaginationItem>
                       );
+                    } else if (
+                        (page === currentPage - 2 && currentPage > 3) ||
+                        (page === currentPage + 2 && currentPage < totalPages - 2)
+                    ) {
+                        // Ensure ellipsis is not duplicated if already handled by a sibling
+                        const key = `ellipsis-${page < currentPage ? 'start' : 'end'}`;
+                        if (!document.querySelector(`[data-ellipsis-key="${key}"]`)) {
+                            return (
+                                <PaginationItem key={key} data-ellipsis-key={key}>
+                                    <PaginationEllipsis />
+                                </PaginationItem>
+                            );
+                        }
                     }
                     return null;
                   })}

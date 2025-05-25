@@ -1,17 +1,11 @@
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -19,240 +13,162 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox'; // Import Checkbox
-import { toast } from '@/hooks/use-toast'; // Corrected import path to hooks directory
-import { useNavigate } from 'react-router-dom';
+import { Checkbox } from '@/components/ui/checkbox';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { ArrowLeft, PlusCircle, Save, X } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { addMockCompanyAdmin } from '@/data/mockCompanyAdmins';
+import { mockGroups } from '@/data/mockGroups';
+import { AdminAuthority, getAuthorityDisplayName } from '@/types/companyAdmin';
+import { addPermissionLog } from '@/data/mockPermissionLogs';
+import { cn } from '@/lib/utils';
 
-// --- Mock Data ---
-// Reusing mock companies from the list page for consistency
-const mockCompanies = [
-  { id: "1", name: "株式会社テクノロジー" },
-  { id: "2", name: "グローバル商事" },
-  { id: "3", name: "未来建設" },
-  { id: "4", name: "エコソリューションズ" },
-];
-
-const mockRoles = [
-  { id: "admin", name: "管理者" },
-  { id: "staff", name: "担当者" },
-  // Add other roles as needed
-];
-
-const mockDepartments = [
-  { id: "dev", label: "開発部" },
-  { id: "sales", label: "営業部" },
-  { id: "hr", label: "人事部" },
-  { id: "marketing", label: "マーケティング部" },
-];
-
-// --- Validation Schema ---
-const addAdminFormSchema = z.object({
-  name: z.string().min(1, { message: '氏名を入力してください。' }),
-  email: z.string()
-    .min(1, { message: 'メールアドレスを入力してください。' })
-    .email({ message: '有効なメールアドレスを入力してください。' }),
-  // TODO: Add async validation for email uniqueness via API call
-  companyId: z.string().min(1, { message: '所属企業を選択してください。' }),
-  role: z.string().min(1, { message: '権限レベルを選択してください。' }),
-  departments: z.array(z.string()).refine((value) => value.some((item) => item), {
-    message: '少なくとも1つの部署を選択してください。', // Optional: make it required
-  }).optional(), // Make the whole array optional if needed, or remove .optional()
+const addAdminSchema = z.object({
+  name: z.string().min(1, { message: '氏名は必須です。' }).max(50, { message: '氏名は50文字以内で入力してください。'}),
+  email: z.string().email({ message: '有効なメールアドレスを入力してください。' }).max(100, { message: 'メールアドレスは100文字以内で入力してください。'}),
+  authority: z.enum(['system_admin', 'results_viewer'], { required_error: '権限を選択してください。' }),
+  affiliatedGroupIds: z.array(z.string()).min(0), // Can be empty if no groups are mandatory
 });
 
-type AddAdminFormValues = z.infer<typeof addAdminFormSchema>;
+type AddAdminFormData = z.infer<typeof addAdminSchema>;
 
-// --- Default Values ---
-const defaultValues: Partial<AddAdminFormValues> = {
-  name: '',
-  email: '',
-  companyId: '',
-  role: '',
-  departments: [],
-};
-
-// --- Component ---
-// This page component is now effectively replaced by the modal
-// and AddCompanyAdminForm.tsx. It can be removed or kept if
-// direct navigation to this form is still desired for some reason.
-// For this task, we assume it's replaced.
-export default function AddCompanyAdmin() {
+const AddCompanyAdmin: React.FC = () => {
   const navigate = useNavigate();
-  const form = useForm<AddAdminFormValues>({
-    resolver: zodResolver(addAdminFormSchema),
-    defaultValues,
-    mode: 'onChange',
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedGroupIds, setSelectedGroupIds] = useState<string[]>([]);
+
+  const { control, handleSubmit, register, formState: { errors } } = useForm<AddAdminFormData>({
+    resolver: zodResolver(addAdminSchema),
+    defaultValues: {
+      name: '',
+      email: '',
+      authority: undefined, // Or a default like 'results_viewer'
+      affiliatedGroupIds: [],
+    },
   });
 
-  function onSubmit(data: AddAdminFormValues) {
-    // TODO: Implement API call to save the new admin data
-    // TODO: Perform email duplication check before submitting
-    console.log(data);
-    toast({
-      title: '管理者情報が送信されました:',
-      description: (
-        <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-          <code className="text-white">{JSON.stringify(data, null, 2)}</code>
-        </pre>
-      ),
-    });
-    // Optionally navigate back to the list page after successful submission
-    navigate('/company-admins'); // This would typically be handled by the modal closing
-    // Or reset the form
-    // form.reset();
-  }
+  const handleGroupChange = (groupId: string) => {
+    setSelectedGroupIds(prev =>
+      prev.includes(groupId) ? prev.filter(id => id !== groupId) : [...prev, groupId]
+    );
+  };
+
+  const onSubmit = (data: AddAdminFormData) => {
+    setIsSubmitting(true);
+    try {
+      const newAdminData = {
+        ...data,
+        affiliatedGroupIds: selectedGroupIds,
+      };
+      const newAdmin = addMockCompanyAdmin(newAdminData);
+
+      addPermissionLog({
+        adminId: newAdmin.id,
+        adminName: newAdmin.name,
+        changedBy: 'System (Current User)',
+        action: 'admin_created',
+        details: `新しい企業管理者「${newAdmin.name}」が登録されました。権限: ${getAuthorityDisplayName(newAdmin.authority)}`,
+      });
+
+      toast({
+        title: '登録成功',
+        description: `企業管理者「${newAdmin.name}」さんを登録しました。`,
+      });
+      navigate('/company-admins');
+    } catch (error) {
+      console.error('企業管理者の登録エラー:', error);
+      toast({
+        title: '登録失敗',
+        description: '企業管理者の登録中にエラーが発生しました。',
+        variant: 'destructive',
+      });
+      setIsSubmitting(false);
+    }
+  };
 
   return (
-    <div className="p-8">
-      <h2 className="text-2xl font-semibold text-gray-900 mb-6">新規企業管理者登録</h2>
-      <p className="mb-4 text-gray-600">このページはモーダルに置き換えられました。`src/components/forms/AddCompanyAdminForm.tsx` と `src/pages/CompanyAdmins.tsx` を参照してください。</p>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 bg-white p-6 shadow rounded-lg max-w-2xl mx-auto">
-          {/* Name */}
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>氏名</FormLabel>
-                <FormControl>
-                  <Input placeholder="例: 山田 太郎" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+    <div className="container mx-auto p-4 md:p-6">
+      <Button onClick={() => navigate('/company-admins')} variant="outline" size="sm" className="mb-6">
+        <ArrowLeft className="mr-2 h-4 w-4" /> 企業管理者一覧に戻る
+      </Button>
 
-          {/* Email */}
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>メールアドレス</FormLabel>
-                <FormControl>
-                  <Input type="email" placeholder="例: yamada.taro@example.com" {...field} />
-                </FormControl>
-                <FormDescription>
-                  ログインに使用します。他の管理者と重複しないものを設定してください。
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+      <Card className="max-w-2xl mx-auto">
+        <CardHeader>
+          <CardTitle className="text-xl md:text-2xl">新規企業管理者登録</CardTitle>
+          <CardDescription>新しい企業管理者の情報を入力してください。</CardDescription>
+        </CardHeader>
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <CardContent className="space-y-6">
+            <div>
+              <Label htmlFor="name">氏名</Label>
+              <Input id="name" {...register('name')} className={cn(errors.name && 'border-red-500 focus-visible:ring-red-500')} disabled={isSubmitting} />
+              {errors.name && <p className="text-sm text-red-600 mt-1">{errors.name.message}</p>}
+            </div>
 
-          {/* Company */}
-          <FormField
-            control={form.control}
-            name="companyId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>所属企業</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="企業を選択してください" />
+            <div>
+              <Label htmlFor="email">メールアドレス</Label>
+              <Input id="email" type="email" {...register('email')} className={cn(errors.email && 'border-red-500 focus-visible:ring-red-500')} disabled={isSubmitting} />
+              {errors.email && <p className="text-sm text-red-600 mt-1">{errors.email.message}</p>}
+            </div>
+
+            <div>
+              <Label htmlFor="authority">権限</Label>
+              <Controller
+                name="authority"
+                control={control}
+                render={({ field }) => (
+                  <Select onValueChange={field.onChange} value={field.value} disabled={isSubmitting}>
+                    <SelectTrigger id="authority" className={cn(errors.authority && 'border-red-500 focus-visible:ring-red-500')}>
+                      <SelectValue placeholder="権限を選択" />
                     </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {mockCompanies.map(company => (
-                      <SelectItem key={company.id} value={company.id}>
-                        {company.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+                    <SelectContent>
+                      <SelectItem value="system_admin">{getAuthorityDisplayName('system_admin')}</SelectItem>
+                      <SelectItem value="results_viewer">{getAuthorityDisplayName('results_viewer')}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              {errors.authority && <p className="text-sm text-red-600 mt-1">{errors.authority.message}</p>}
+            </div>
 
-          {/* Role */}
-          <FormField
-            control={form.control}
-            name="role"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>権限レベル</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="権限を選択してください" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {mockRoles.map(role => (
-                      <SelectItem key={role.id} value={role.id}>
-                        {role.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Departments */}
-          <FormField
-            control={form.control}
-            name="departments"
-            render={() => (
-              <FormItem>
-                <div className="mb-4">
-                  <FormLabel className="text-base">担当部署/グループ</FormLabel>
-                  <FormDescription>
-                    アクセスを許可する部署/グループを選択してください（複数選択可）。
-                  </FormDescription>
-                </div>
-                <div className="grid grid-cols-2 gap-4"> {/* Layout checkboxes */}
-                  {mockDepartments.map((item) => (
-                    <FormField
-                      key={item.id}
-                      control={form.control}
-                      name="departments"
-                      render={({ field }) => {
-                        return (
-                          <FormItem
-                            key={item.id}
-                            className="flex flex-row items-start space-x-3 space-y-0"
-                          >
-                            <FormControl>
-                              <Checkbox
-                                checked={field.value?.includes(item.id)}
-                                onCheckedChange={(checked) => {
-                                  return checked
-                                    ? field.onChange([...(field.value ?? []), item.id])
-                                    : field.onChange(
-                                        field.value?.filter(
-                                          (value) => value !== item.id
-                                        )
-                                      );
-                                }}
-                              />
-                            </FormControl>
-                            <FormLabel className="font-normal">
-                              {item.label}
-                            </FormLabel>
-                          </FormItem>
-                        );
-                      }}
-                    />
+            <div>
+              <Label>所属グループ（複数選択可）</Label>
+              <ScrollArea className="h-40 w-full rounded-md border p-2 mt-1">
+                <div className="space-y-1">
+                  {mockGroups.map((group) => (
+                    <div key={group.id} className="flex items-center space-x-2 p-1 hover:bg-gray-50 rounded">
+                      <Checkbox
+                        id={`group-${group.id}`}
+                        checked={selectedGroupIds.includes(group.id)}
+                        onCheckedChange={() => handleGroupChange(group.id)}
+                        disabled={isSubmitting}
+                      />
+                      <Label htmlFor={`group-${group.id}`} className="font-normal text-sm">{group.name}</Label>
+                    </div>
                   ))}
+                  {mockGroups.length === 0 && <p className="text-sm text-gray-500 p-2">利用可能なグループがありません。</p>}
                 </div>
-                <FormMessage /> {/* Show validation message for the array */}
-              </FormItem>
-            )}
-          />
-
-
-          <div className="flex justify-end space-x-2">
-             <Button type="button" variant="outline" onClick={() => navigate('/company-admins')}>
-               キャンセル
-             </Button>
-             <Button type="submit">管理者を登録</Button>
-          </div>
+              </ScrollArea>
+              {errors.affiliatedGroupIds && <p className="text-sm text-red-600 mt-1">{errors.affiliatedGroupIds.message}</p>}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              注意: パスワードは初回ログイン時に設定するフローを想定しています (このフォームでは設定しません)。
+            </p>
+          </CardContent>
+          <CardFooter className="flex justify-end space-x-3 pt-6">
+            <Button type="button" variant="outline" onClick={() => navigate('/company-admins')} disabled={isSubmitting}>
+              <X className="mr-2 h-4 w-4" /> キャンセル
+            </Button>
+            <Button type="submit" disabled={isSubmitting}>
+              <Save className="mr-2 h-4 w-4" /> {isSubmitting ? '登録中...' : '登録する'}
+            </Button>
+          </CardFooter>
         </form>
-      </Form>
+      </Card>
     </div>
   );
-}
+};
+
+export default AddCompanyAdmin;
