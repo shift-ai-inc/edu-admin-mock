@@ -61,11 +61,14 @@ export default function AssessmentList() {
   return (
     <div className="p-4 md:p-8">
       <Card>
-        <CardHeader>
-          <CardTitle>アセスメント一覧</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            配信可能なアセスメントを管理します。
-          </p>
+        <CardHeader className="flex flex-row items-start justify-between pb-2 space-y-0">
+          <div>
+            <CardTitle>アセスメント一覧</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              配信可能なアセスメントを管理します。
+            </p>
+          </div>
+          <Button>新規登録</Button>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 py-4">
