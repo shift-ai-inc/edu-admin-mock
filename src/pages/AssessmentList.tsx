@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ListFilter, Search } from 'lucide-react';
+import { CreateAssessmentModal } from '@/components/features/assessment/CreateAssessmentModal';
 
 const assessmentTypes: AssessmentType[] = ["multiple-choice", "coding-test", "scenario-based", "video-submission"];
 const assessmentDifficulties: AssessmentDifficulty[] = ["beginner", "intermediate", "advanced", "expert"];
@@ -26,6 +27,7 @@ export default function AssessmentList() {
   const [selectedTypes, setSelectedTypes] = useState<Set<AssessmentType>>(new Set());
   const [selectedDifficulties, setSelectedDifficulties] = useState<Set<AssessmentDifficulty>>(new Set());
   const [selectedSkillLevels, setSelectedSkillLevels] = useState<Set<SkillLevel>>(new Set());
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const filteredAssessments = useMemo(() => {
     return mockAssessments.filter((assessment) => {
@@ -57,6 +59,21 @@ export default function AssessmentList() {
     setter(newSet);
   };
 
+  const handleOpenModal = () => {
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+  };
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleSaveAssessment = async (data: any) => {
+    // TODO: Save assessment data
+    console.log('Assessment data to save:', data);
+    handleCloseModal();
+  };
+
 
   return (
     <div className="p-4 md:p-8">
@@ -68,7 +85,7 @@ export default function AssessmentList() {
               配信可能なアセスメントを管理します。
             </p>
           </div>
-          <Button>新規登録</Button>
+          <Button onClick={handleOpenModal}>新規登録</Button>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 py-4">
@@ -159,6 +176,7 @@ export default function AssessmentList() {
           />
         </CardContent>
       </Card>
+      <CreateAssessmentModal isOpen={isModalOpen} onClose={handleCloseModal} onSave={handleSaveAssessment} />
     </div>
   );
 }
