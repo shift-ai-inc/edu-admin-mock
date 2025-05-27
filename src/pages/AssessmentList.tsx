@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ListFilter, Search } from 'lucide-react';
+import { ListFilter, Plus, Search } from 'lucide-react';
 import { CreateAssessmentModal } from '@/components/features/assessment/CreateAssessmentModal';
 
 const assessmentTypes: AssessmentType[] = ["multiple-choice", "coding-test", "scenario-based", "video-submission"];
@@ -85,7 +85,9 @@ export default function AssessmentList() {
               配信可能なアセスメントを管理します。
             </p>
           </div>
-          <Button onClick={handleOpenModal}>新規登録</Button>
+          <Button className="flex items-center gap-1" onClick={handleOpenModal}>
+            <Plus size={16} /> 新規登録
+          </Button>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 py-4">
